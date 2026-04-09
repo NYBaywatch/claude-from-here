@@ -59,8 +59,8 @@ completed: 2026-04-09
 
 - **Duration:** ~18 min
 - **Started:** 2026-04-09T18:34:00Z
-- **Completed:** 2026-04-09T18:52:00Z (Tasks 1-2; Task 3 pending human verification)
-- **Tasks:** 2 of 3 complete (Task 3 is checkpoint:human-verify)
+- **Completed:** 2026-04-09
+- **Tasks:** 3 of 3 complete
 - **Files modified:** 7
 
 ## Accomplishments
@@ -77,7 +77,7 @@ completed: 2026-04-09
 
 1. **Task 1: Create PowerShell register and unregister scripts** - `dac5ed4` (feat)
 2. **Task 2: Build DLL and register package** - `7d91a3a` (feat)
-3. **Task 3: Verify context menu in Explorer** - PENDING (checkpoint:human-verify)
+3. **Task 3: Verify context menu in Explorer** - `1891ba4` (fix: wt.exe command line quoting + human verified approved)
 
 ## Files Created/Modified
 
@@ -155,9 +155,10 @@ None — scripts are complete implementations. The stub exe (`ClaudeFromHere.exe
 - `register.ps1` and `unregister.ps1` are the primary dev workflow tools for Phase 3 (installer)
 - The Inno Setup installer (Phase 3) will replicate the register.ps1 steps: cert import (elevated), MSIX registration, Explorer restart
 - Patterns discovered here (GUID without braces, /MANIFEST:NO, stub exe) must be documented for the installer script
-- Task 3 (human verification) is pending — context menu appearance in Windows 11 Explorer must be confirmed before Phase 1 is marked complete
+- Task 3 (human verification) passed — user confirmed context menu works on folder right-click, launches correctly
+- Fixed wt.exe command line parsing: added `--` separator and drive-root path normalization
 
 ---
 
 *Phase: 01-foundation*
-*Completed: 2026-04-09 (Tasks 1-2; Task 3 pending)*
+*Completed: 2026-04-09*

@@ -32,7 +32,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 - [x] 01-01-PLAN.md — C++ COM DLL source code, CMake build system, AppxManifest, and icon asset
-- [ ] 01-02-PLAN.md — PowerShell dev scripts, build, register, and end-to-end verification
+- [x] 01-02-PLAN.md — PowerShell dev scripts, build, register, and end-to-end verification
 
 ### Phase 2: Launcher and Config
 **Goal**: Clicking the menu item opens Windows Terminal in the correct directory running claude, path detection works automatically, errors are surfaced clearly, and users can configure Claude CLI flags via a GUI app
