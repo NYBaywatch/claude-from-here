@@ -9,9 +9,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Context Menu
 
-- [ ] **MENU-01**: User sees "Claude from here" in the Windows 11 modern (top-level) right-click menu when right-clicking a folder
-- [ ] **MENU-02**: User sees "Claude from here" when right-clicking the background inside a folder
-- [ ] **MENU-03**: Menu item displays a custom Claude icon next to the text
+- [x] **MENU-01**: User sees "Claude from here" in the Windows 11 modern (top-level) right-click menu when right-clicking a folder
+- [x] **MENU-02**: User sees "Claude from here" when right-clicking the background inside a folder
+- [x] **MENU-03**: Menu item displays a custom Claude icon next to the text
 
 ### Launch
 
@@ -79,9 +79,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MENU-01 | Phase 1 | Pending |
-| MENU-02 | Phase 1 | Pending |
-| MENU-03 | Phase 1 | Pending |
+| MENU-01 | Phase 1 | Complete |
+| MENU-02 | Phase 1 | Complete |
+| MENU-03 | Phase 1 | Complete |
 | LNCH-01 | Phase 2 | Pending |
 | LNCH-02 | Phase 2 | Pending |
 | LNCH-03 | Phase 2 | Pending |

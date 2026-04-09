@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 1 context gathered
-last_updated: "2026-04-09T18:37:48.968Z"
-last_activity: 2026-04-09 -- Phase 01 execution started
+stopped_at: Completed 01-foundation-01-01-PLAN.md
+last_updated: "2026-04-09T18:44:25.501Z"
+last_activity: 2026-04-09
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 2
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-08)
 ## Current Position
 
 Phase: 01 (foundation) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 01
-Last activity: 2026-04-09 -- Phase 01 execution started
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-04-09
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01-foundation P01 | 25 | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -62,6 +63,9 @@ Recent decisions affecting current work:
 
 - Sparse MSIX over COM DLL: cleaner build path, but Directory\Background coverage is the Phase 1 unknown to resolve
 - Self-signed cert required: machine trust store import needed for end-user installs (Inno Setup handles this in Phase 3)
+- [Phase 01-foundation]: CLSID {b2dd8803-e848-41d5-bb0b-598086308dcf} generated and used consistently across AppxManifest.xml and dllmain.cpp
+- [Phase 01-foundation]: IObjectWithSite traversal chain for Directory\Background: IServiceProvider -> SID_STopLevelBrowser -> IShellBrowser -> IFolderView -> GetFolder
+- [Phase 01-foundation]: SearchPathW checks wt.exe and claude.exe at invoke time; MessageBoxW error dialogs for missing executables (D-02)
 
 ### Pending Todos
 
@@ -74,6 +78,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T18:09:36.386Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-foundation/01-CONTEXT.md
+Last session: 2026-04-09T18:44:25.499Z
+Stopped at: Completed 01-foundation-01-01-PLAN.md
+Resume file: None
