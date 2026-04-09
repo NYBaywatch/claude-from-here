@@ -56,9 +56,9 @@ function Write-Step([string]$Msg) {
     Write-Host "==> $Msg" -ForegroundColor Cyan
 }
 
-function Invoke-ExternalTool([string]$Description, [string]$Exe, [string[]]$Args) {
-    Write-Host "    Running: $Exe $Args"
-    & $Exe @Args
+function Invoke-ExternalTool([string]$Description, [string]$Exe, [string[]]$ToolArgs) {
+    Write-Host "    Running: $Exe $ToolArgs"
+    & $Exe @ToolArgs
     if ($LASTEXITCODE -ne 0) {
         throw "$Description failed with exit code $LASTEXITCODE"
     }
@@ -130,6 +130,8 @@ if (-not $SkipBuild) {
 
     # CMake with VS generator puts output in Release/ subdirectory
     $DllReleasePath = "$BuildDir\Release\ClaudeFromHere.dll"
+    $ExeReleasePath = "$BuildDir\Release\ClaudeFromHere.exe"
+
     if (-not (Test-Path $DllReleasePath)) {
         throw "Build succeeded but DLL not found at expected path: $DllReleasePath"
     }
@@ -138,6 +140,14 @@ if (-not $SkipBuild) {
     Write-Host "    Copying DLL from Release\ to build root..."
     Copy-Item -Path $DllReleasePath -Destination "$BuildDir\ClaudeFromHere.dll" -Force
     Write-Host "    DLL ready at: $BuildDir\ClaudeFromHere.dll"
+
+    # Copy stub exe up one level (required by AppxManifest Executable attribute)
+    if (Test-Path $ExeReleasePath) {
+        Copy-Item -Path $ExeReleasePath -Destination "$BuildDir\ClaudeFromHere.exe" -Force
+        Write-Host "    Stub EXE ready at: $BuildDir\ClaudeFromHere.exe"
+    } else {
+        Write-Warning "    Stub EXE not found at $ExeReleasePath -- package may fail validation"
+    }
 } else {
     Write-Step "Step 0: Skipped (SkipBuild specified)"
 

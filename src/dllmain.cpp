@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <unknwn.h>
 #include <shlobj.h>
+#include <new>
 
 // -------------------------------------------------------------------------
 // Globals
@@ -15,7 +16,7 @@ long    g_cDllRef = 0;         // Reference count for DllCanUnloadNow
 
 // CLSID for this COM class — must match AppxManifest.xml exactly
 // {b2dd8803-e848-41d5-bb0b-598086308dcf}
-__declspec(selectany) const CLSID CLSID_ClaudeFromHere =
+extern const CLSID CLSID_ClaudeFromHere =
     { 0xb2dd8803, 0xe848, 0x41d5, { 0xbb, 0x0b, 0x59, 0x80, 0x86, 0x30, 0x8d, 0xcf } };
 
 // Forward declaration

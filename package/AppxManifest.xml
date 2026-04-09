@@ -43,7 +43,7 @@
   <Applications>
     <Application
       Id="ClaudeFromHere"
-      Executable="ClaudeFromHere.dll"
+      Executable="ClaudeFromHere.exe"
       uap10:TrustLevel="mediumIL"
       uap10:RuntimeBehavior="win32App">
 
@@ -62,7 +62,7 @@
           <com:ComServer>
             <com:SurrogateServer DisplayName="ClaudeFromHere">
               <com:Class
-                Id="{b2dd8803-e848-41d5-bb0b-598086308dcf}"
+                Id="b2dd8803-e848-41d5-bb0b-598086308dcf"
                 Path="ClaudeFromHere.dll"
                 ThreadingModel="STA" />
             </com:SurrogateServer>
@@ -73,10 +73,10 @@
         <desktop4:Extension Category="windows.fileExplorerContextMenus">
           <desktop4:FileExplorerContextMenus>
             <desktop5:ItemType Type="Directory">
-              <desktop5:Verb Id="ClaudeFromHere" Clsid="{b2dd8803-e848-41d5-bb0b-598086308dcf}" />
+              <desktop5:Verb Id="ClaudeFromHere" Clsid="b2dd8803-e848-41d5-bb0b-598086308dcf" />
             </desktop5:ItemType>
             <desktop5:ItemType Type="Directory\Background">
-              <desktop5:Verb Id="ClaudeFromHere" Clsid="{b2dd8803-e848-41d5-bb0b-598086308dcf}" />
+              <desktop5:Verb Id="ClaudeFromHere" Clsid="b2dd8803-e848-41d5-bb0b-598086308dcf" />
             </desktop5:ItemType>
           </desktop4:FileExplorerContextMenus>
         </desktop4:Extension>
