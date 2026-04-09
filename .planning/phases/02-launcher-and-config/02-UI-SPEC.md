@@ -51,7 +51,7 @@ WinForms uses dialog units (DLU) internally, but pixel equivalents at 96 DPI / S
 Exceptions:
 - Button height: 23px (WinForms default) — not overridden
 - Window minimum width: 400px; minimum height: 320px
-- Save/Cancel buttons: 75px wide x 23px tall (WinForms standard)
+- Apply Settings/Discard Changes buttons: 75px wide x 23px tall (WinForms standard)
 
 ---
 
@@ -91,6 +91,8 @@ No hex values in source code. No hardcoded `Color.FromArgb(...)` calls.
 
 **Window title:** "Claude From Here — Settings"
 
+**Primary focal point:** Apply Settings button — positioned at bottom-right, standard Windows dialog convention.
+
 ### Layout
 
 Single-pane window, no tabs, no scrolling required. All controls visible on open.
@@ -110,7 +112,7 @@ Single-pane window, no tabs, no scrolling required. All controls visible on open
 |    claude.exe:  Found at C:\...\claude   |
 |    wt.exe:      Found at C:\...\wt.exe   |
 |                                          |
-|              [Save]  [Cancel]            |
+|    [Discard Changes]  [Apply Settings]   |
 +------------------------------------------+
 ```
 
@@ -122,8 +124,8 @@ Single-pane window, no tabs, no scrolling required. All controls visible on open
 | Verbose | CheckBox | "Enable verbose mode" | Checked = `--verbose` appended; unchecked = omitted |
 | Allowed Tools | TextBox | "Allowed Tools:" | Raw value passed as `--allowedTools <value>`; empty = omitted |
 | Extra Flags | TextBox | "Extra Flags:" | Appended verbatim to command line; empty = omitted |
-| Save | Button | "Save" | Writes to registry, closes window |
-| Cancel | Button | "Cancel" | Discards unsaved changes, closes window |
+| Apply Settings | Button | "Apply Settings" | Writes to registry, closes window |
+| Discard Changes | Button | "Discard Changes" | Discards unsaved changes, closes window |
 
 ### Model Dropdown Values (source: Claude's Discretion)
 
@@ -141,13 +143,13 @@ Single-pane window, no tabs, no scrolling required. All controls visible on open
 - Each row shows: label + detected path, or label + "Not found" in red (`Color.Red`) if missing
 - "Not found" is the only case where a non-system color is used (explicit exception for error signal)
 
-### On Save Behavior
+### On Apply Settings Behavior
 
 1. Validate: warn (not block) if Extra Flags contains shell-unsafe characters that could break `CreateProcessW`. Non-blocking `MessageBox.Show` with MB_ICONWARNING.
 2. Write all values to `HKCU\Software\ClaudeFromHere` (from CONTEXT.md D-03, D-04).
 3. Close window with `DialogResult.OK`.
 
-### On Cancel Behavior
+### On Discard Changes Behavior
 
 Close window immediately. No confirmation dialog.
 
@@ -182,8 +184,8 @@ Surfaced by the DLL in `Invoke()` when a required executable is not found. Decis
 | Element | Copy |
 |---------|------|
 | Window title | "Claude From Here — Settings" |
-| Primary CTA | "Save" |
-| Cancel action | "Cancel" |
+| Primary CTA | "Apply Settings" |
+| Cancel action | "Discard Changes" |
 | GroupBox 1 heading | "Claude CLI Flags" |
 | GroupBox 2 heading | "Path Detection" |
 | Path found state | "Found at {path}" |
@@ -199,7 +201,7 @@ Surfaced by the DLL in `Invoke()` when a required executable is not found. Decis
 | Extra Flags label | "Extra Flags:" |
 | Model label | "Model:" |
 
-Destructive actions in this phase: none. Cancel discards unsaved config — no confirmation required (no data is deleted, only uncommitted form state is lost).
+Destructive actions in this phase: none. Discard Changes closes without saving — no confirmation required (no data is deleted, only uncommitted form state is lost).
 
 ---
 
@@ -224,8 +226,8 @@ No web component registries involved. NuGet packages are not in scope for this d
 | Verbose CheckBox | Unchecked (default), checked |
 | AllowedTools TextBox | Empty (default), filled, focused |
 | Extra Flags TextBox | Empty (default), filled, focused |
-| Save Button | Normal, focused, pressed (all system-rendered) |
-| Cancel Button | Normal, focused, pressed (all system-rendered) |
+| Apply Settings Button | Normal, focused, pressed (all system-rendered) |
+| Discard Changes Button | Normal, focused, pressed (all system-rendered) |
 | Path status row | "Found at {path}" (black text), "Not found" (red text) |
 
 ### Error Dialogs
