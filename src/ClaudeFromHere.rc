@@ -1,0 +1,3 @@
+#include <winresrc.h>
+IDI_CLAUDE ICON "..\\assets\\claude.ico"
+2 RT_MANIFEST "ClaudeFromHere.manifest"

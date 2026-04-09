@@ -1,0 +1,4 @@
+LIBRARY ClaudeFromHere
+EXPORTS
+    DllGetClassObject  PRIVATE
+    DllCanUnloadNow    PRIVATE
