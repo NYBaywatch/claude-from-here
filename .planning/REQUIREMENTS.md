@@ -1,7 +1,7 @@
 # Requirements: Claude From Here
 
 **Defined:** 2026-04-08
-**Core Value:** Right-click any folder in Windows 11 Explorer → Claude Code opens in that directory. One click, no terminal juggling.
+**Core Value:** Right-click any folder in Windows 11 Explorer -> Claude Code opens in that directory. One click, no terminal juggling.
 
 ## v1 Requirements
 
@@ -79,13 +79,29 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (populated by roadmapper) | | |
+| MENU-01 | Phase 1 | Pending |
+| MENU-02 | Phase 1 | Pending |
+| MENU-03 | Phase 1 | Pending |
+| LNCH-01 | Phase 2 | Pending |
+| LNCH-02 | Phase 2 | Pending |
+| LNCH-03 | Phase 2 | Pending |
+| LNCH-04 | Phase 2 | Pending |
+| LNCH-05 | Phase 2 | Pending |
+| CONF-01 | Phase 2 | Pending |
+| CONF-02 | Phase 2 | Pending |
+| CONF-03 | Phase 2 | Pending |
+| INST-01 | Phase 3 | Pending |
+| INST-02 | Phase 3 | Pending |
+| INST-03 | Phase 3 | Pending |
+| INST-04 | Phase 3 | Pending |
+| DIST-01 | Phase 4 | Pending |
+| DIST-02 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 16 total
-- Mapped to phases: 0
-- Unmapped: 16 (pending roadmap)
+- Mapped to phases: 16
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-08*
-*Last updated: 2026-04-08 after initial definition*
+*Last updated: 2026-04-08 after roadmap creation*
