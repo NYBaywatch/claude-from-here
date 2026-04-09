@@ -1,0 +1,3 @@
+build/
+*.pfx
+cert-password.txt

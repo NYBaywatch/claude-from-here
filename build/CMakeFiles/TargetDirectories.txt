@@ -1,4 +1,0 @@
-D:/Working/Projects/claude-from-here/build/CMakeFiles/ClaudeFromHere.dir
-D:/Working/Projects/claude-from-here/build/CMakeFiles/ClaudeFromHereStub.dir
-D:/Working/Projects/claude-from-here/build/CMakeFiles/ALL_BUILD.dir
-D:/Working/Projects/claude-from-here/build/CMakeFiles/ZERO_CHECK.dir
