@@ -280,9 +280,20 @@ private:
 
         // Build command line: wt.exe -d "<pszPath>" cmd /k claude
         // We need to quote the path in case it contains spaces.
+        // Ensure drive-root paths like "D:" get a trailing backslash ("D:\")
+        // because wt.exe rejects bare drive letters as -d arguments.
+        WCHAR szPath[MAX_PATH] = {};
+        StringCbCopyW(szPath, sizeof(szPath), pszPath);
+        size_t len = wcslen(szPath);
+        if (len == 2 && szPath[1] == L':')
+        {
+            szPath[2] = L'\\';
+            szPath[3] = L'\0';
+        }
+
         WCHAR szCmdLine[32768] = {};
         HRESULT hr = StringCbPrintfW(szCmdLine, sizeof(szCmdLine),
-            L"wt.exe -d \"%s\" cmd /k claude", pszPath);
+            L"wt.exe -d \"%s\" -- cmd /k claude", szPath);
         if (FAILED(hr))
             return;
 
