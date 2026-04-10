@@ -2,13 +2,30 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Interop;
 using Microsoft.Win32;
 
 namespace ClaudeFromHereConfig
 {
     public partial class MainWindow : Window
     {
+        [DllImport("dwmapi.dll", PreserveSig = true)]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
+
+        private void EnableDarkTitleBar()
+        {
+            var hwnd = new WindowInteropHelper(this).Handle;
+            int darkMode = 1;
+            DwmSetWindowAttribute(hwnd, 20, ref darkMode, sizeof(int)); // DWMWA_USE_IMMERSIVE_DARK_MODE
+            int borderColor = 0x00000000; // black border
+            DwmSetWindowAttribute(hwnd, 34, ref borderColor, sizeof(int)); // DWMWA_BORDER_COLOR
+            int captionColor = 0x001e1e1e;
+            DwmSetWindowAttribute(hwnd, 35, ref captionColor, sizeof(int)); // DWMWA_CAPTION_COLOR
+            int textColor = 0x00d4d4d4; // COLORREF BGR for #d4d4d4
+            DwmSetWindowAttribute(hwnd, 36, ref textColor, sizeof(int)); // DWMWA_TEXT_COLOR
+        }
         private const string RegistryPath = @"Software\ClaudeFromHere";
         private ObservableCollection<string> _channels = new ObservableCollection<string>();
 
@@ -21,6 +38,7 @@ namespace ClaudeFromHereConfig
         public MainWindow()
         {
             InitializeComponent();
+            SourceInitialized += (_, _) => EnableDarkTitleBar();
             ChannelListBox.ItemsSource = _channels;
             LoadSettings();
             DetectPaths();
@@ -112,6 +130,13 @@ namespace ClaudeFromHereConfig
 
             this.Close();
         }
+
+        private void MinButton_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
+
+        private void MaxButton_Click(object sender, RoutedEventArgs e) =>
+            WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
 
         private void DiscardChanges_Click(object sender, RoutedEventArgs e)
         {

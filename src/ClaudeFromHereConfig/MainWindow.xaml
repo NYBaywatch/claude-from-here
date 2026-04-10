@@ -5,11 +5,35 @@
         MinWidth="500" MinHeight="480"
         Width="520" Height="560"
         ResizeMode="CanResize"
-        WindowStartupLocation="CenterScreen">
-    <DockPanel Margin="16">
+        WindowStartupLocation="CenterScreen"
+        Icon="pack://siteoforigin:,,,/settings.ico"
+        Background="{StaticResource DominantBrush}">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="32" ResizeBorderThickness="4"
+                      GlassFrameThickness="-1" CornerRadius="8"/>
+    </WindowChrome.WindowChrome>
+    <DockPanel>
+        <!-- Custom title bar -->
+        <Grid DockPanel.Dock="Top" Height="32" Background="{StaticResource DominantBrush}">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="12,0,0,0">
+                <Image Source="pack://siteoforigin:,,,/settings.ico" Width="16" Height="16" Margin="0,0,8,0"/>
+                <TextBlock Text="Claude From Here &#x2014; Settings"
+                           VerticalAlignment="Center" FontSize="12"
+                           Foreground="{StaticResource ForegroundBrush}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top"
+                        WindowChrome.IsHitTestVisibleInChrome="True">
+                <Button x:Name="MinButton" Style="{StaticResource CaptionButton}"
+                        Content="&#xE921;" Click="MinButton_Click" ToolTip="Minimize"/>
+                <Button x:Name="MaxButton" Style="{StaticResource CaptionButton}"
+                        Content="&#xE922;" Click="MaxButton_Click" ToolTip="Maximize"/>
+                <Button x:Name="CloseButton" Style="{StaticResource CloseCaptionButton}"
+                        Content="&#xE8BB;" Click="CloseButton_Click" ToolTip="Close"/>
+            </StackPanel>
+        </Grid>
         <!-- Bottom button bar -->
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"
-                    HorizontalAlignment="Right" Margin="0,16,0,0">
+                    HorizontalAlignment="Right" Margin="16,16,16,16">
             <Button Content="Discard Changes" Width="110"
                     Style="{StaticResource SecondaryButton}"
                     Click="DiscardChanges_Click" Margin="0,0,8,0"/>
@@ -20,7 +44,7 @@
         </StackPanel>
 
         <!-- Tab control fills remaining space -->
-        <TabControl>
+        <TabControl Margin="16,0,16,0">
             <!-- General tab -->
             <TabItem Header="General">
                 <StackPanel Margin="16">
