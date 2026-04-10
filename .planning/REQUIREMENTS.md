@@ -15,11 +15,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Launch
 
-- [ ] **LNCH-01**: Clicking the menu item opens Windows Terminal in the right-clicked directory with `claude` running
-- [ ] **LNCH-02**: Installer auto-detects the claude.exe path (no manual configuration required)
-- [ ] **LNCH-03**: Installer auto-detects the wt.exe path (no manual configuration required)
-- [ ] **LNCH-04**: User sees a clear error dialog if Claude Code is not found when clicking the menu item
-- [ ] **LNCH-05**: User sees a clear error dialog if Windows Terminal is not found when clicking the menu item
+- [x] **LNCH-01**: Clicking the menu item opens Windows Terminal in the right-clicked directory with `claude` running
+- [x] **LNCH-02**: Installer auto-detects the claude.exe path (no manual configuration required)
+- [x] **LNCH-03**: Installer auto-detects the wt.exe path (no manual configuration required)
+- [x] **LNCH-04**: User sees a clear error dialog if Claude Code is not found when clicking the menu item
+- [x] **LNCH-05**: User sees a clear error dialog if Windows Terminal is not found when clicking the menu item
 
 ### Configuration
 
@@ -82,11 +82,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MENU-01 | Phase 1 | Complete |
 | MENU-02 | Phase 1 | Complete |
 | MENU-03 | Phase 1 | Complete |
-| LNCH-01 | Phase 2 | Pending |
-| LNCH-02 | Phase 2 | Pending |
-| LNCH-03 | Phase 2 | Pending |
-| LNCH-04 | Phase 2 | Pending |
-| LNCH-05 | Phase 2 | Pending |
+| LNCH-01 | Phase 2 | Complete |
+| LNCH-02 | Phase 2 | Complete |
+| LNCH-03 | Phase 2 | Complete |
+| LNCH-04 | Phase 2 | Complete |
+| LNCH-05 | Phase 2 | Complete |
 | CONF-01 | Phase 2 | Pending |
 | CONF-02 | Phase 2 | Pending |
 | CONF-03 | Phase 2 | Pending |

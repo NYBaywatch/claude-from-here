@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 2 context gathered
-last_updated: "2026-04-09T20:46:11.731Z"
-last_activity: 2026-04-09
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-04-10T09:12:45.909Z"
+last_activity: 2026-04-10
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 5
+  completed_plans: 3
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-08)
 
 **Core value:** Right-click any folder in Windows 11 Explorer -> Claude Code opens in that directory. One click, no terminal juggling.
-**Current focus:** Phase 01 — foundation
+**Current focus:** Phase 02 — launcher-and-config
 
 ## Current Position
 
-Phase: 2
-Plan: Not started
+Phase: 02 (launcher-and-config) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-04-09
+Last activity: 2026-04-10
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 01-foundation P01 | 25 | 3 tasks | 9 files |
 | Phase 01-foundation P02 | 18 | 2 tasks | 7 files |
+| Phase 02-launcher-and-config P01 | 8 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -70,6 +71,8 @@ Recent decisions affecting current work:
 - [Phase 01-foundation]: AppxManifest GUID format: no curly braces in com:Class Id and desktop5:Verb Clsid attributes (MakeAppx schema validation)
 - [Phase 01-foundation]: /MANIFEST:NO linker flag required when .rc embeds RT_MANIFEST to prevent CVT1100 duplicate resource error
 - [Phase 01-foundation]: WIN32 stub exe required by AppxManifest Application Executable .exe constraint; pure COM surrogate DLL cannot be listed as Executable
+- [Phase 02-launcher-and-config]: FindExecutable checks HKCU App Paths before HKLM for wt.exe (Store installs are per-user)
+- [Phase 02-launcher-and-config]: CreateProcessW uses lpApplicationName=szWt to handle spaces in WindowsApps path
 
 ### Pending Todos
 
@@ -82,6 +85,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-09T20:46:11.728Z
-Stopped at: Phase 2 context gathered
-Resume file: .planning/phases/02-launcher-and-config/02-CONTEXT.md
+Last session: 2026-04-10T09:12:45.906Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: None
