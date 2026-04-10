@@ -44,6 +44,9 @@ Source: "..\build\claude.ico";                      DestDir: "{app}"; Flags: ign
 Source: "..\build\AppxManifest.xml";                DestDir: "{app}"; Flags: ignoreversion
 Source: "..\build\Assets\*";                        DestDir: "{app}\Assets"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\build\ClaudeFromHere.msix";             DestDir: "{app}"; Flags: ignoreversion
+; Self-signed dev cert -- only present for local builds (not Azure-signed CI builds)
+; skipifsourcedoesntexist allows the same .iss to work for both signed and dev builds
+Source: "..\build\ClaudeFromHere-dev.cer";          DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 
 ; ---------------------------------------------------------------------------
 ; [Icons]
@@ -53,29 +56,38 @@ Source: "..\build\ClaudeFromHere.msix";             DestDir: "{app}"; Flags: ign
 Name: "{userprograms}\Claude From Here\Claude From Here Settings"; Filename: "{app}\ClaudeFromHereConfig.exe"; IconFilename: "{app}\claude.ico"
 
 ; ---------------------------------------------------------------------------
-; [Run] — post-install actions
+; [Run] -- post-install actions
 ; ---------------------------------------------------------------------------
 
 [Run]
+; Import self-signed dev cert to LocalMachine\TrustedPeople (only present for local/dev builds).
+; The .cer file is absent for Azure-signed CI builds, so this step is a no-op for production.
+; certutil -addstore TrustedPeople requires admin; Inno Setup's Check function gates it.
+; Note: In [Run] Parameters, {app} is expanded by Inno Setup before the shell sees it.
+Filename: "powershell.exe"; \
+  Parameters: "-ExecutionPolicy Bypass -NonInteractive -Command ""if (Test-Path '{app}\ClaudeFromHere-dev.cer') {{ Start-Process certutil -Verb RunAs -Wait -ArgumentList '-addstore TrustedPeople ""{app}\ClaudeFromHere-dev.cer""' }}"""; \
+  Flags: runhidden waituntilterminated; \
+  StatusMsg: "Importing signing certificate (dev build)..."
+
 ; Register MSIX sparse package with ExternalLocation pointing to install dir
 Filename: "powershell.exe"; \
   Parameters: "-ExecutionPolicy Bypass -NonInteractive -Command ""Add-AppxPackage -Path '{app}\ClaudeFromHere.msix' -ExternalLocation '{app}' -ErrorAction Stop"""; \
   Flags: runhidden waituntilterminated; \
   StatusMsg: "Activating shell extension..."
 
-; Explorer restart — interactive mode (checkbox on final wizard page)
+; Explorer restart -- interactive mode (checkbox on final wizard page)
 Filename: "powershell.exe"; \
   Parameters: "-ExecutionPolicy Bypass -NonInteractive -Command ""Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue; Start-Sleep -Milliseconds 500; Start-Process explorer.exe"""; \
   Flags: runhidden waituntilterminated skipifsilent postinstall; \
   Description: "Restart File Explorer now (required to activate 'Claude from here')"
 
-; Explorer restart — silent mode (automatic, no user interaction)
+; Explorer restart -- silent mode (automatic, no user interaction)
 Filename: "powershell.exe"; \
   Parameters: "-ExecutionPolicy Bypass -NonInteractive -Command ""Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue; Start-Sleep -Milliseconds 500; Start-Process explorer.exe"""; \
   Flags: runhidden waituntilterminated skipifnotsilent
 
 ; ---------------------------------------------------------------------------
-; [UninstallRun] — uninstall actions
+; [UninstallRun] -- uninstall actions
 ; ---------------------------------------------------------------------------
 
 [UninstallRun]
@@ -92,7 +104,7 @@ Filename: "powershell.exe"; \
   RunOnceId: "RestartExplorer"
 
 ; ---------------------------------------------------------------------------
-; [Code] — Pascal scripting for upgrade DLL lock prevention
+; [Code] -- Pascal scripting for upgrade DLL lock prevention
 ; ---------------------------------------------------------------------------
 
 [Code]
@@ -117,6 +129,6 @@ begin
       'Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue; ' +
       'Start-Sleep -Milliseconds 500"',
       '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-    // ResultCode intentionally not checked — fresh install has no existing package
+    // ResultCode intentionally not checked -- fresh install has no existing package
   end;
 end;

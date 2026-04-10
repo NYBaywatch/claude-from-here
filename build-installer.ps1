@@ -247,17 +247,14 @@ Write-Host "    MSIX packed: $MsixPath"
 # ---------------------------------------------------------------------------
 
 if (-not $SkipSign) {
-    Write-Step "Step 5: Signing MSIX with Azure Trusted Signing"
+    Write-Step "Step 5: Signing MSIX"
 
     $tsEndpoint = if ($env:CFH_SIGNING_ENDPOINT) { $env:CFH_SIGNING_ENDPOINT } else { "https://eus.codesigning.azure.net/" }
     $tsAccount  = if ($env:CFH_SIGNING_ACCOUNT)  { $env:CFH_SIGNING_ACCOUNT  } else { $null }
     $tsProfile  = if ($env:CFH_SIGNING_PROFILE)  { $env:CFH_SIGNING_PROFILE  } else { $null }
 
-    if (-not $tsAccount -or -not $tsProfile) {
-        Write-Warning "    Azure Trusted Signing env vars not set. MSIX will be unsigned."
-        Write-Warning "    Set CFH_SIGNING_ACCOUNT and CFH_SIGNING_PROFILE to enable signing."
-        Write-Warning "    Optionally set CFH_SIGNING_ENDPOINT (default: https://eus.codesigning.azure.net/)"
-    } else {
+    if ($tsAccount -and $tsProfile) {
+        # --- Azure Trusted Signing (CI / production) ---
         $signTool = Get-Command sign -ErrorAction SilentlyContinue
         if (-not $signTool) {
             throw "'sign' dotnet tool not found. Install with: dotnet tool install --global sign --prerelease"
@@ -277,11 +274,107 @@ if (-not $SkipSign) {
             throw "MSIX signing failed with exit code $LASTEXITCODE"
         }
 
-        Write-Host "    MSIX signed successfully."
+        Write-Host "    MSIX signed via Azure Trusted Signing."
+    } else {
+        # --- Self-signed fallback (local dev builds) ---
+        Write-Host "    Azure Trusted Signing env vars not set. Falling back to self-signed cert for local build."
+        Write-Host "    Set CFH_SIGNING_ACCOUNT and CFH_SIGNING_PROFILE to use Azure Trusted Signing."
+
+        $SignTool     = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64\signtool.exe"
+        if (-not (Test-Path $SignTool)) {
+            throw "signtool.exe not found at: $SignTool`nInstall Windows SDK 10.0.26100.0"
+        }
+
+        # Publisher CN must match AppxManifest exactly
+        $CertSubject  = "CN=Joseph Fago, O=Joseph Fago, L=Newark, S=New Jersey, C=US"
+        $PfxPath      = Join-Path $BuildDir "ClaudeFromHere-dev.pfx"
+        $PwdPath      = Join-Path $BuildDir "ClaudeFromHere-dev-cert-password.txt"
+        $CerPath      = Join-Path $BuildDir "ClaudeFromHere-dev.cer"
+
+        # Reuse existing cert if already in the machine trust store
+        $existingCert = Get-ChildItem "Cert:\LocalMachine\TrustedPeople" -ErrorAction SilentlyContinue |
+            Where-Object { $_.Subject -eq $CertSubject } |
+            Select-Object -First 1
+
+        $pfxPassword = $null
+
+        if ($existingCert -and (Test-Path $PfxPath) -and (Test-Path $PwdPath)) {
+            Write-Host "    Reusing existing self-signed cert (thumbprint: $($existingCert.Thumbprint))"
+            $pfxPassword = (Get-Content $PwdPath).Trim()
+        } else {
+            Write-Host "    Generating self-signed certificate for local build..."
+
+            $cert = New-SelfSignedCertificate `
+                -Type Custom `
+                -Subject $CertSubject `
+                -KeyUsage DigitalSignature `
+                -CertStoreLocation "Cert:\CurrentUser\My" `
+                -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3")
+
+            $pfxPassword = [System.Guid]::NewGuid().ToString()
+            $secPwd = ConvertTo-SecureString -String $pfxPassword -Force -AsPlainText
+
+            Export-PfxCertificate -Cert $cert -FilePath $PfxPath -Password $secPwd | Out-Null
+            $pfxPassword | Out-File -FilePath $PwdPath -Encoding ascii -NoNewline
+            Export-Certificate -Cert $cert -FilePath $CerPath -Type CERT | Out-Null
+
+            Write-Host "    Certificate created (thumbprint: $($cert.Thumbprint))"
+            Write-Host "    PFX: $PfxPath"
+            Write-Host "    CER: $CerPath"
+
+            # Import to LocalMachine\TrustedPeople - required for Add-AppxPackage to trust the MSIX
+            # This step needs admin elevation
+            $id        = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+            $principal = New-Object System.Security.Principal.WindowsPrincipal($id)
+            $isAdmin   = $principal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
+
+            if ($isAdmin) {
+                Import-PfxCertificate -FilePath $PfxPath -CertStoreLocation "Cert:\LocalMachine\TrustedPeople" -Password $secPwd | Out-Null
+                Write-Host "    Certificate imported to LocalMachine\TrustedPeople."
+            } else {
+                Write-Host "    Requesting elevation to import cert to LocalMachine\TrustedPeople..."
+                $importCmd = "Import-PfxCertificate -FilePath '$PfxPath' -CertStoreLocation 'Cert:\LocalMachine\TrustedPeople' -Password (ConvertTo-SecureString -String '$pfxPassword' -Force -AsPlainText)"
+                Start-Process powershell -Verb RunAs -ArgumentList "-NoProfile -Command $importCmd" -Wait
+
+                $imported = Get-ChildItem "Cert:\LocalMachine\TrustedPeople" -ErrorAction SilentlyContinue |
+                    Where-Object { $_.Subject -eq $CertSubject } |
+                    Select-Object -First 1
+                if (-not $imported) {
+                    throw "Cert import to LocalMachine\TrustedPeople failed or was cancelled. Cannot sign MSIX."
+                }
+                Write-Host "    Certificate import confirmed."
+            }
+        }
+
+        # Export .cer if not already present (needed by installer to trust the signed MSIX on the target machine)
+        if (-not (Test-Path $CerPath)) {
+            $userCert = Get-ChildItem "Cert:\CurrentUser\My" -ErrorAction SilentlyContinue |
+                Where-Object { $_.Subject -eq $CertSubject } |
+                Select-Object -First 1
+            if ($userCert) {
+                Export-Certificate -Cert $userCert -FilePath $CerPath -Type CERT | Out-Null
+                Write-Host "    CER exported: $CerPath"
+            } else {
+                Write-Warning "    Could not export .cer - installer will not import cert on target machine."
+            }
+        }
+
+        Invoke-ExternalTool "SignTool sign" $SignTool @(
+            "sign",
+            "/fd", "SHA256",
+            "/a",
+            "/f", $PfxPath,
+            "/p", $pfxPassword,
+            $MsixPath
+        )
+
+        Write-Host "    MSIX signed with self-signed cert (local dev build)."
+        Write-Host "    NOTE: The installer will import the self-signed cert to the user's machine."
     }
 } else {
     Write-Step "Step 5: Skipped (SkipSign specified)"
-    Write-Host "    MSIX will be unsigned (dev build)."
+    Write-Warning "    MSIX is unsigned. Install will fail unless Developer Mode is enabled."
+    Write-Warning "    Use -SkipSign only for inspecting the package, not for testing registration."
 }
 
 # ---------------------------------------------------------------------------

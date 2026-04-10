@@ -1,7 +1,8 @@
 build/
 dist/
 *.pfx
-cert-password.txt
+*.cer
+*cert-password.txt
 src/*/obj/
 src/*/bin/
 .planning/
