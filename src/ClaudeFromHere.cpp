@@ -335,6 +335,12 @@ private:
         WCHAR szAllowedTools[1024] = {};
         WCHAR szExtraFlags[2048]   = {};
         DWORD dwVerbose            = 0;
+        DWORD dwContinue                  = 0;
+        DWORD dwResume                    = 0;
+        DWORD dwDangerSkip                = 0;
+        DWORD dwAllowDangerSkip           = 0;
+        WCHAR szRemoteControlPrefix[1024] = {};
+        WCHAR szChannels[8192]            = {};
 
         DWORD cb = sizeof(szModel);
         RegGetValueW(HKEY_CURRENT_USER, L"Software\\ClaudeFromHere", L"Model",
@@ -352,8 +358,32 @@ private:
         RegGetValueW(HKEY_CURRENT_USER, L"Software\\ClaudeFromHere", L"ExtraFlags",
             RRF_RT_REG_SZ | RRF_ZEROONFAILURE, nullptr, szExtraFlags, &cb);
 
+        cb = sizeof(dwContinue);
+        RegGetValueW(HKEY_CURRENT_USER, L"Software\\ClaudeFromHere", L"Continue",
+            RRF_RT_REG_DWORD | RRF_ZEROONFAILURE, nullptr, &dwContinue, &cb);
+
+        cb = sizeof(dwResume);
+        RegGetValueW(HKEY_CURRENT_USER, L"Software\\ClaudeFromHere", L"Resume",
+            RRF_RT_REG_DWORD | RRF_ZEROONFAILURE, nullptr, &dwResume, &cb);
+
+        cb = sizeof(dwDangerSkip);
+        RegGetValueW(HKEY_CURRENT_USER, L"Software\\ClaudeFromHere", L"DangerouslySkipPermissions",
+            RRF_RT_REG_DWORD | RRF_ZEROONFAILURE, nullptr, &dwDangerSkip, &cb);
+
+        cb = sizeof(dwAllowDangerSkip);
+        RegGetValueW(HKEY_CURRENT_USER, L"Software\\ClaudeFromHere", L"AllowDangerouslySkipPermissions",
+            RRF_RT_REG_DWORD | RRF_ZEROONFAILURE, nullptr, &dwAllowDangerSkip, &cb);
+
+        cb = sizeof(szRemoteControlPrefix);
+        RegGetValueW(HKEY_CURRENT_USER, L"Software\\ClaudeFromHere", L"RemoteControlPrefix",
+            RRF_RT_REG_SZ | RRF_ZEROONFAILURE, nullptr, szRemoteControlPrefix, &cb);
+
+        cb = sizeof(szChannels);
+        RegGetValueW(HKEY_CURRENT_USER, L"Software\\ClaudeFromHere", L"Channels",
+            RRF_RT_REG_SZ | RRF_ZEROONFAILURE, nullptr, szChannels, &cb);
+
         // --- Build flags string ---
-        WCHAR szFlags[4096] = {};
+        WCHAR szFlags[16384] = {};
         if (szModel[0])
         {
             StringCbCatW(szFlags, sizeof(szFlags), L" --model ");
