@@ -393,10 +393,60 @@ private:
         {
             StringCbCatW(szFlags, sizeof(szFlags), L" --verbose");
         }
+        if (dwContinue)
+        {
+            StringCbCatW(szFlags, sizeof(szFlags), L" -c");
+        }
+        if (dwResume)
+        {
+            StringCbCatW(szFlags, sizeof(szFlags), L" -r");
+        }
+        if (dwDangerSkip)
+        {
+            StringCbCatW(szFlags, sizeof(szFlags), L" --dangerously-skip-permissions");
+        }
+        if (dwAllowDangerSkip)
+        {
+            StringCbCatW(szFlags, sizeof(szFlags), L" --allow-dangerously-skip-permissions");
+        }
+        if (szRemoteControlPrefix[0])
+        {
+            StringCbCatW(szFlags, sizeof(szFlags), L" --remote-control-session-name-prefix ");
+            StringCbCatW(szFlags, sizeof(szFlags), szRemoteControlPrefix);
+        }
         if (szAllowedTools[0])
         {
             StringCbCatW(szFlags, sizeof(szFlags), L" --allowedTools ");
             StringCbCatW(szFlags, sizeof(szFlags), szAllowedTools);
+        }
+        if (szChannels[0])
+        {
+            // Split szChannels on '|' (matches Phase 5 storage: string.Join("|", _channels)).
+            // Trim whitespace per entry, skip empties (handles trailing pipe and "||"),
+            // hard cap at 32 entries (D-03) -- no dynamic allocation, finite work.
+            WCHAR* context = nullptr;
+            WCHAR* token = wcstok_s(szChannels, L"|", &context);
+            int channelCount = 0;
+            while (token != nullptr && channelCount < 32)
+            {
+                // Trim leading whitespace
+                while (*token == L' ' || *token == L'\t')
+                    token++;
+                // Trim trailing whitespace
+                size_t tlen = wcslen(token);
+                while (tlen > 0 && (token[tlen - 1] == L' ' || token[tlen - 1] == L'\t'))
+                {
+                    token[tlen - 1] = L'\0';
+                    tlen--;
+                }
+                if (tlen > 0)
+                {
+                    StringCbCatW(szFlags, sizeof(szFlags), L" --channels ");
+                    StringCbCatW(szFlags, sizeof(szFlags), token);
+                    channelCount++;
+                }
+                token = wcstok_s(nullptr, L"|", &context);
+            }
         }
         if (szExtraFlags[0])
         {
