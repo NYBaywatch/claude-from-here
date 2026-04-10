@@ -53,7 +53,7 @@ Plans:
 - [x] 02-03-PLAN.md — Integration: register.ps1 update and end-to-end verification
 
 ### Phase 3: Installer
-**Goal**: A single `.exe` installer handles all setup steps (cert import, MSIX registration, file deployment) and a clean uninstaller removes everything, with upgrade installs working without manual intervention
+**Goal**: A single `.exe` installer handles all setup steps (MSIX registration, file deployment) and a clean uninstaller removes everything, with upgrade installs working without manual intervention
 **Depends on**: Phase 2
 **Requirements**: INST-01, INST-02, INST-03, INST-04
 **Success Criteria** (what must be TRUE):
@@ -61,7 +61,11 @@ Plans:
   2. Running the uninstaller removes all MSIX registrations, files, and registry entries cleanly
   3. The installer works on Windows 11 machines with different user profiles and non-standard install locations
   4. Reinstalling over an existing version (upgrade) completes without requiring a manual uninstall first
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Inno Setup script and build-installer.ps1 orchestration script
+- [ ] 03-02-PLAN.md — Build end-to-end, resolve signing CN, and verify installer
 
 ### Phase 4: Distribution
 **Goal**: The project is publicly available on GitHub with a downloadable installer in Releases and documentation that enables users to install, use, and troubleshoot without assistance
@@ -82,5 +86,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete |  |
 | 2. Launcher and Config | 2/3 | In Progress|  |
-| 3. Installer | 0/TBD | Not started | - |
+| 3. Installer | 0/2 | Not started | - |
 | 4. Distribution | 0/TBD | Not started | - |
