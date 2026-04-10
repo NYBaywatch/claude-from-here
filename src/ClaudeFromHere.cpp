@@ -247,39 +247,134 @@ private:
 
     // -----------------------------------------------------------------------
     // _LaunchClaude
-    // Searches PATH for wt.exe and claude.exe.
-    // Shows MessageBox on failure (D-02).
-    // Launches: wt.exe -d "<pszPath>" cmd /k claude
+    // Multi-stage path detection for wt.exe and claude.exe (LNCH-02, LNCH-03).
+    // Reads registry flags from HKCU\Software\ClaudeFromHere (LNCH-01).
+    // Shows actionable MessageBox on failure with install instructions (LNCH-04, LNCH-05).
+    // Launches: wt.exe -d "<pszPath>" -- cmd /k claude <flags>
     // -----------------------------------------------------------------------
+
+    // FindExecutable: 3-stage detection (SearchPathW -> HKCU App Paths -> HKLM App Paths).
+    // Stage 4 (wt.exe execution alias) is handled in _LaunchClaude after this call.
+    static BOOL FindExecutable(PCWSTR exeName, PCWSTR appPathsSubkey, PWSTR szOut, DWORD cchOut)
+    {
+        // Stage 1: SearchPathW (PATH, includes %LOCALAPPDATA%\Microsoft\WindowsApps)
+        if (SearchPathW(nullptr, exeName, nullptr, cchOut, szOut, nullptr))
+            return TRUE;
+
+        // Stage 2: HKCU App Paths (wt.exe Store install registers here, not HKLM)
+        DWORD cb = cchOut * sizeof(WCHAR);
+        if (RegGetValueW(HKEY_CURRENT_USER, appPathsSubkey, nullptr,
+                RRF_RT_REG_SZ | RRF_ZEROONFAILURE, nullptr, szOut, &cb) == ERROR_SUCCESS
+            && szOut[0])
+            return TRUE;
+
+        // Stage 3: HKLM App Paths (winget / system-wide installs)
+        cb = cchOut * sizeof(WCHAR);
+        if (RegGetValueW(HKEY_LOCAL_MACHINE, appPathsSubkey, nullptr,
+                RRF_RT_REG_SZ | RRF_ZEROONFAILURE, nullptr, szOut, &cb) == ERROR_SUCCESS
+            && szOut[0])
+            return TRUE;
+
+        return FALSE;
+    }
 
     void _LaunchClaude(PCWSTR pszPath)
     {
-        // Check wt.exe is available on PATH
+        // --- Find wt.exe (3-stage + Stage 4 execution alias fallback) ---
         WCHAR szWt[MAX_PATH] = {};
-        if (!SearchPathW(nullptr, L"wt.exe", nullptr, ARRAYSIZE(szWt), szWt, nullptr))
+        BOOL wtFound = FindExecutable(L"wt.exe",
+            L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\wt.exe",
+            szWt, ARRAYSIZE(szWt));
+
+        // Stage 4: execution alias for wt.exe (Store installs under %LOCALAPPDATA%\Microsoft\WindowsApps)
+        if (!wtFound)
+        {
+            WCHAR szAlias[MAX_PATH] = {};
+            ExpandEnvironmentStringsW(
+                L"%LOCALAPPDATA%\\Microsoft\\WindowsApps\\wt.exe",
+                szAlias, ARRAYSIZE(szAlias));
+            if (PathFileExistsW(szAlias))
+            {
+                StringCbCopyW(szWt, sizeof(szWt), szAlias);
+                wtFound = TRUE;
+            }
+        }
+
+        if (!wtFound)
         {
             MessageBoxW(nullptr,
-                L"Windows Terminal (wt.exe) was not found in PATH.\n"
-                L"Please install Windows Terminal from the Microsoft Store.",
-                L"Claude from here",
+                L"Windows Terminal was not found on this machine.\n\n"
+                L"To install, open Microsoft Store and search for 'Windows Terminal', or run:\n"
+                L"    winget install Microsoft.WindowsTerminal\n\n"
+                L"After installing, restart Windows Explorer (or sign out and back in).",
+                L"Claude From Here",
                 MB_OK | MB_ICONERROR);
             return;
         }
 
-        // Check claude.exe is available on PATH
+        // --- Find claude.exe (3-stage; no execution alias for claude) ---
         WCHAR szClaude[MAX_PATH] = {};
-        if (!SearchPathW(nullptr, L"claude.exe", nullptr, ARRAYSIZE(szClaude), szClaude, nullptr))
+        BOOL claudeFound = FindExecutable(L"claude.exe",
+            L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\claude.exe",
+            szClaude, ARRAYSIZE(szClaude));
+
+        if (!claudeFound)
         {
             MessageBoxW(nullptr,
-                L"claude.exe was not found in PATH.\n"
-                L"Please install Claude Code and ensure it is on your PATH.",
-                L"Claude from here",
+                L"Claude Code was not found on this machine.\n\n"
+                L"To install, run in any terminal:\n"
+                L"    npm i -g @anthropic-ai/claude-code\n\n"
+                L"After installing, restart Windows Explorer (or sign out and back in).",
+                L"Claude From Here",
                 MB_OK | MB_ICONERROR);
             return;
         }
 
-        // Build command line: wt.exe -d "<pszPath>" cmd /k claude
-        // We need to quote the path in case it contains spaces.
+        // --- Read registry flags from HKCU\Software\ClaudeFromHere ---
+        WCHAR szModel[256]         = {};
+        WCHAR szAllowedTools[1024] = {};
+        WCHAR szExtraFlags[2048]   = {};
+        DWORD dwVerbose            = 0;
+
+        DWORD cb = sizeof(szModel);
+        RegGetValueW(HKEY_CURRENT_USER, L"Software\\ClaudeFromHere", L"Model",
+            RRF_RT_REG_SZ | RRF_ZEROONFAILURE, nullptr, szModel, &cb);
+
+        cb = sizeof(dwVerbose);
+        RegGetValueW(HKEY_CURRENT_USER, L"Software\\ClaudeFromHere", L"Verbose",
+            RRF_RT_REG_DWORD | RRF_ZEROONFAILURE, nullptr, &dwVerbose, &cb);
+
+        cb = sizeof(szAllowedTools);
+        RegGetValueW(HKEY_CURRENT_USER, L"Software\\ClaudeFromHere", L"AllowedTools",
+            RRF_RT_REG_SZ | RRF_ZEROONFAILURE, nullptr, szAllowedTools, &cb);
+
+        cb = sizeof(szExtraFlags);
+        RegGetValueW(HKEY_CURRENT_USER, L"Software\\ClaudeFromHere", L"ExtraFlags",
+            RRF_RT_REG_SZ | RRF_ZEROONFAILURE, nullptr, szExtraFlags, &cb);
+
+        // --- Build flags string ---
+        WCHAR szFlags[4096] = {};
+        if (szModel[0])
+        {
+            StringCbCatW(szFlags, sizeof(szFlags), L" --model ");
+            StringCbCatW(szFlags, sizeof(szFlags), szModel);
+        }
+        if (dwVerbose)
+        {
+            StringCbCatW(szFlags, sizeof(szFlags), L" --verbose");
+        }
+        if (szAllowedTools[0])
+        {
+            StringCbCatW(szFlags, sizeof(szFlags), L" --allowedTools ");
+            StringCbCatW(szFlags, sizeof(szFlags), szAllowedTools);
+        }
+        if (szExtraFlags[0])
+        {
+            StringCbCatW(szFlags, sizeof(szFlags), L" ");
+            StringCbCatW(szFlags, sizeof(szFlags), szExtraFlags);
+        }
+
+        // --- Build command line ---
         // Ensure drive-root paths like "D:" get a trailing backslash ("D:\")
         // because wt.exe rejects bare drive letters as -d arguments.
         WCHAR szPath[MAX_PATH] = {};
@@ -293,15 +388,17 @@ private:
 
         WCHAR szCmdLine[32768] = {};
         HRESULT hr = StringCbPrintfW(szCmdLine, sizeof(szCmdLine),
-            L"wt.exe -d \"%s\" -- cmd /k claude", szPath);
+            L"wt.exe -d \"%s\" -- cmd /k claude%s", szPath, szFlags);
         if (FAILED(hr))
             return;
 
         STARTUPINFOW si = { sizeof(si) };
         PROCESS_INFORMATION pi = {};
 
+        // Use lpApplicationName = szWt so spaces in the Store install path
+        // (e.g. C:\Program Files\WindowsApps\...) are handled correctly.
         if (CreateProcessW(
-                nullptr,       // lpApplicationName (use command line)
+                szWt,          // lpApplicationName -- full resolved path, handles spaces
                 szCmdLine,     // lpCommandLine
                 nullptr,       // lpProcessAttributes
                 nullptr,       // lpThreadAttributes
