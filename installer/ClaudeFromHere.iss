@@ -39,7 +39,9 @@ UninstallDisplayName=Claude From Here
 Source: "..\build\ClaudeFromHere.dll";              DestDir: "{app}"; Flags: ignoreversion
 Source: "..\build\ClaudeFromHere.exe";              DestDir: "{app}"; Flags: ignoreversion
 Source: "..\build\ClaudeFromHereConfig.exe";        DestDir: "{app}"; Flags: ignoreversion
-Source: "..\build\ClaudeFromHereConfig.exe.config"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\build\ClaudeFromHereConfig.dll";        DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "..\build\ClaudeFromHereConfig.deps.json";  DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "..\build\ClaudeFromHereConfig.runtimeconfig.json"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 Source: "..\build\claude.ico";                      DestDir: "{app}"; Flags: ignoreversion
 Source: "..\build\AppxManifest.xml";                DestDir: "{app}"; Flags: ignoreversion
 Source: "..\build\Assets\*";                        DestDir: "{app}\Assets"; Flags: ignoreversion recursesubdirs createallsubdirs
