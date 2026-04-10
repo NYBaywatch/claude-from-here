@@ -64,8 +64,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Inno Setup script and build-installer.ps1 orchestration script
-- [ ] 03-02-PLAN.md — Build end-to-end, resolve signing CN, and verify installer
+- [x] 03-01-PLAN.md — Inno Setup script and build-installer.ps1 orchestration script
+- [x] 03-02-PLAN.md — Build end-to-end, resolve signing CN, and verify installer
 
 ### Phase 4: Distribution
 **Goal**: The project is publicly available on GitHub with a downloadable installer in Releases and documentation that enables users to install, use, and troubleshoot without assistance
