@@ -110,7 +110,11 @@ Plans:
   1. Enabling any new CLI flag in Settings and right-clicking a folder causes that flag to appear in the launched `claude` command
   2. Adding multiple channels in Settings causes one `--channels` argument per entry to be passed to Claude Code
   3. Disabling all new flags and clearing channels results in a command line identical to the pre-v1.1.0 behavior
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 06-01-extend-launchclaude-PLAN.md — Extend _LaunchClaude in src/ClaudeFromHere.cpp: bump szFlags buffer, read six new HKCU keys, append flags in D-08 order, channel splitter
+- [ ] 06-02-build-and-verify-PLAN.md — Build the DLL, reinstall so Explorer loads it, manually verify the three Phase 6 success criteria including the all-off byte-identical case
 
 ## Progress
 
