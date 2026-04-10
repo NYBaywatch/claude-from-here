@@ -36,7 +36,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Distribution
 
-- [ ] **DIST-01**: Project is available on GitHub with downloadable installer in Releases
+- [x] **DIST-01**: Project is available on GitHub with downloadable installer in Releases
 - [x] **DIST-02**: README documents installation, uninstallation, and troubleshooting
 
 ## v2 Requirements
@@ -94,7 +94,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INST-02 | Phase 3 | Complete |
 | INST-03 | Phase 3 | Complete |
 | INST-04 | Phase 3 | Complete |
-| DIST-01 | Phase 4 | Pending |
+| DIST-01 | Phase 4 | Complete |
 | DIST-02 | Phase 4 | Complete |
 
 **Coverage:**
