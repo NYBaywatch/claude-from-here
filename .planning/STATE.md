@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
+milestone: v1.0.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 4 context gathered
-last_updated: "2026-04-10T17:40:03.582Z"
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-04-10T18:02:52.348Z"
 last_activity: 2026-04-10
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 10
+  completed_plans: 9
   percent: 71
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-08)
 
 **Core value:** Right-click any folder in Windows 11 Explorer -> Claude Code opens in that directory. One click, no terminal juggling.
-**Current focus:** Phase 03 — installer
+**Current focus:** Phase 04 — distribution
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
-Status: Executing Phase 03
+Phase: 04 (distribution) — EXECUTING
+Plan: 3 of 3
+Status: Ready to execute
 Last activity: 2026-04-10
 
 Progress: [███████░░░] 71%
@@ -56,6 +56,8 @@ Progress: [███████░░░] 71%
 | Phase 01-foundation P02 | 18 | 2 tasks | 7 files |
 | Phase 02-launcher-and-config P01 | 8 | 1 tasks | 2 files |
 | Phase 02-launcher-and-config P02 | 15 | 2 tasks | 4 files |
+| Phase 04-distribution P01 | 57s | 2 tasks | 3 files |
+| Phase 04-distribution P02 | 1 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -76,6 +78,11 @@ Recent decisions affecting current work:
 - [Phase 02-launcher-and-config]: CreateProcessW uses lpApplicationName=szWt to handle spaces in WindowsApps path
 - [Phase 02-launcher-and-config]: AppendTargetFrameworkToOutputPath=false ensures ClaudeFromHereConfig.exe lands in build/ not build/net48/
 - [Phase 02-launcher-and-config]: Model dropdown index 0 stores empty string in registry to omit --model flag; all other indices store model ID as-is
+- [Phase 04-distribution]: MIT License 2026 for Claude From Here contributors (D-08)
+- [Phase 04-distribution]: Troubleshooting table covers 5 known failure modes: Explorer restart, Claude not found, WT not found, Win10 not supported, menu item after uninstall
+- [Phase 04-distribution]: Dynamic MakeAppx discovery via Get-ChildItem to handle varying Windows SDK versions on windows-latest runner
+- [Phase 04-distribution]: OIDC workload identity (id-token: write) for Azure Trusted Signing avoids stored client secrets
+- [Phase 04-distribution]: Smoke test verifies MSIX registration + file deployment only; UI context menu verification skipped per D-16
 
 ### Pending Todos
 
@@ -88,6 +95,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-10T17:40:03.580Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-distribution/04-CONTEXT.md
+Last session: 2026-04-10T18:02:40.117Z
+Stopped at: Completed 04-01-PLAN.md
+Resume file: None
