@@ -65,13 +65,13 @@ Filename: "powershell.exe"; \
 
 ; Explorer restart — interactive mode (checkbox on final wizard page)
 Filename: "powershell.exe"; \
-  Parameters: "-ExecutionPolicy Bypass -NonInteractive -Command ""Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue"""; \
+  Parameters: "-ExecutionPolicy Bypass -NonInteractive -Command ""Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue; Start-Sleep -Milliseconds 500; Start-Process explorer.exe"""; \
   Flags: runhidden waituntilterminated skipifsilent postinstall; \
   Description: "Restart File Explorer now (required to activate 'Claude from here')"
 
 ; Explorer restart — silent mode (automatic, no user interaction)
 Filename: "powershell.exe"; \
-  Parameters: "-ExecutionPolicy Bypass -NonInteractive -Command ""Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue"""; \
+  Parameters: "-ExecutionPolicy Bypass -NonInteractive -Command ""Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue; Start-Sleep -Milliseconds 500; Start-Process explorer.exe"""; \
   Flags: runhidden waituntilterminated skipifnotsilent
 
 ; ---------------------------------------------------------------------------
@@ -87,7 +87,7 @@ Filename: "powershell.exe"; \
 
 ; Restart Explorer to unload DLL
 Filename: "powershell.exe"; \
-  Parameters: "-ExecutionPolicy Bypass -NonInteractive -Command ""Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue"""; \
+  Parameters: "-ExecutionPolicy Bypass -NonInteractive -Command ""Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue; Start-Sleep -Milliseconds 500; Start-Process explorer.exe"""; \
   Flags: runhidden waituntilterminated; \
   RunOnceId: "RestartExplorer"
 
@@ -115,7 +115,7 @@ begin
       '$pkg = Get-AppxPackage -Name ''ClaudeFromHere'' -ErrorAction SilentlyContinue; ' +
       'if ($pkg) { Remove-AppxPackage -Package $pkg.PackageFullName -ErrorAction SilentlyContinue }; ' +
       'Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue; ' +
-      'Start-Sleep -Seconds 2"',
+      'Start-Sleep -Milliseconds 500"',
       '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
     // ResultCode intentionally not checked — fresh install has no existing package
   end;
