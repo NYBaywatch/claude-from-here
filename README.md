@@ -15,8 +15,6 @@ Works on folder right-click and folder background right-click. Open any project,
 
 ![Context Menu](docs/screenshot.png)
 
-![Demo](docs/demo.gif)
-
 ## Install
 
 Download the latest installer from [Releases](https://github.com/NYBaywatch/claude-from-here/releases):
