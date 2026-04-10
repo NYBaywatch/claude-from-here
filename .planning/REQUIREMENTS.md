@@ -23,9 +23,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Configuration
 
-- [ ] **CONF-01**: User can open a simple GUI app to configure Claude CLI flags passed to the `claude` command
-- [ ] **CONF-02**: Common flags are exposed as checkboxes/dropdowns (e.g., --model, --verbose, --allowedTools)
-- [ ] **CONF-03**: Configured flags are persisted across sessions and applied on every launch
+- [x] **CONF-01**: User can open a simple GUI app to configure Claude CLI flags passed to the `claude` command
+- [x] **CONF-02**: Common flags are exposed as checkboxes/dropdowns (e.g., --model, --verbose, --allowedTools)
+- [x] **CONF-03**: Configured flags are persisted across sessions and applied on every launch
 
 ### Installation
 
@@ -87,9 +87,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LNCH-03 | Phase 2 | Complete |
 | LNCH-04 | Phase 2 | Complete |
 | LNCH-05 | Phase 2 | Complete |
-| CONF-01 | Phase 2 | Pending |
-| CONF-02 | Phase 2 | Pending |
-| CONF-03 | Phase 2 | Pending |
+| CONF-01 | Phase 2 | Complete |
+| CONF-02 | Phase 2 | Complete |
+| CONF-03 | Phase 2 | Complete |
 | INST-01 | Phase 3 | Pending |
 | INST-02 | Phase 3 | Pending |
 | INST-03 | Phase 3 | Pending |

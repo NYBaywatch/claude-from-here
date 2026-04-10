@@ -44,12 +44,12 @@ Plans:
   3. A clear error dialog appears if `claude.exe` is not found at launch time
   4. A clear error dialog appears if `wt.exe` is not found at launch time
   5. User can open a GUI app, configure Claude CLI flags (model, verbose, allowedTools), and settings persist across sessions and apply on every launch
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 **UI hint**: yes
 
 Plans:
 - [x] 02-01-PLAN.md — DLL enhancement: path detection, registry flag reads, improved error dialogs
-- [ ] 02-02-PLAN.md — WinForms config app: settings UI, registry read/write, path detection display
+- [x] 02-02-PLAN.md — WinForms config app: settings UI, registry read/write, path detection display
 - [ ] 02-03-PLAN.md — Integration: register.ps1 update and end-to-end verification
 
 ### Phase 3: Installer
@@ -81,6 +81,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete |  |
-| 2. Launcher and Config | 1/3 | In Progress|  |
+| 2. Launcher and Config | 2/3 | In Progress|  |
 | 3. Installer | 0/TBD | Not started | - |
 | 4. Distribution | 0/TBD | Not started | - |
