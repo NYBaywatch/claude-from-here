@@ -12,21 +12,20 @@ Right-click any folder or folder background in Windows 11 Explorer → Claude Co
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] "Claude from here" appears in the Windows 11 modern (top-level) context menu when right-clicking a folder — Validated in Phase 1
+- [x] "Claude from here" appears when right-clicking the background inside a folder — Validated in Phase 1
+- [x] Custom icon displayed next to the menu item — Validated in Phase 1
+- [x] Sparse MSIX package approach for Windows 11 modern context menu integration — Validated in Phase 1
+- [x] Clicking the menu item launches Claude Code in the target directory via Windows Terminal — Validated in Phase 2
+- [x] Auto-detect Claude Code executable path — Validated in Phase 2
+- [x] Auto-detect Windows Terminal path — Validated in Phase 2
+- [x] Graceful error handling — clear messages if Claude Code or Windows Terminal not found — Validated in Phase 2
+- [x] Installer (.exe) that registers everything automatically — Validated in Phase 3
+- [x] Uninstaller that cleanly removes all registry entries, MSIX registration, and files — Validated in Phase 3
+- [x] Works on various Windows 11 setups (handles different install locations, user profiles) — Validated in Phase 3
 
 ### Active
 
-- [ ] "Claude from here" appears in the Windows 11 modern (top-level) context menu when right-clicking a folder
-- [ ] "Claude from here" appears when right-clicking the background inside a folder
-- [ ] Clicking the menu item launches Claude Code in the target directory via Windows Terminal
-- [ ] Custom icon displayed next to the menu item (Claude/Anthropic icon)
-- [ ] Sparse MSIX package approach for Windows 11 modern context menu integration
-- [ ] Installer (.exe) that registers everything automatically
-- [ ] Uninstaller that cleanly removes all registry entries, MSIX registration, and files
-- [ ] Auto-detect Claude Code executable path (not hardcoded)
-- [ ] Auto-detect Windows Terminal path
-- [ ] Graceful error handling — clear messages if Claude Code or Windows Terminal not found
-- [ ] Works on various Windows 11 setups (handles different install locations, user profiles)
 - [ ] GitHub-ready: README, license, release artifacts
 
 ### Out of Scope
@@ -80,4 +79,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-08 after initialization*
+*Last updated: 2026-04-10 after Phase 3 completion*
