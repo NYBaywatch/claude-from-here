@@ -113,7 +113,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 06-01-extend-launchclaude-PLAN.md — Extend _LaunchClaude in src/ClaudeFromHere.cpp: bump szFlags buffer, read six new HKCU keys, append flags in D-08 order, channel splitter
+- [x] 06-01-extend-launchclaude-PLAN.md — Extend _LaunchClaude in src/ClaudeFromHere.cpp: bump szFlags buffer, read six new HKCU keys, append flags in D-08 order, channel splitter
 - [ ] 06-02-build-and-verify-PLAN.md — Build the DLL, reinstall so Explorer loads it, manually verify the three Phase 6 success criteria including the all-off byte-identical case
 
 ## Progress

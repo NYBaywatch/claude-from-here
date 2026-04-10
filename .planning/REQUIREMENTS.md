@@ -56,11 +56,11 @@ Requirements for Enhanced Settings milestone. Each maps to roadmap phases.
 - [x] **CHN-01**: User can add a channel from preset list (telegram, discord) via dropdown in Settings
 - [x] **CHN-02**: User can add a custom channel entry via freeform text input
 - [x] **CHN-03**: User can remove individual channel entries from the list
-- [ ] **CHN-04**: Multiple `--channels` flags are passed to Claude Code (one per entry)
+- [x] **CHN-04**: Multiple `--channels` flags are passed to Claude Code (one per entry)
 
 ### Integration
 
-- [ ] **INT-01**: C++ DLL reads new registry keys and appends corresponding flags to the Claude Code command line
+- [x] **INT-01**: C++ DLL reads new registry keys and appends corresponding flags to the Claude Code command line
 - [x] **INT-02**: Settings persist across app restarts (registry storage, consistent with existing pattern)
 
 ## Future Requirements
@@ -124,8 +124,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CHN-01 | Phase 5 | Complete |
 | CHN-02 | Phase 5 | Complete |
 | CHN-03 | Phase 5 | Complete |
-| CHN-04 | Phase 6 | Pending |
-| INT-01 | Phase 6 | Pending |
+| CHN-04 | Phase 6 | Complete |
+| INT-01 | Phase 6 | Complete |
 | INT-02 | Phase 5 | Complete |
 
 **Coverage:**

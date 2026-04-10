@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0.0
 milestone_name: milestone
-status: Ready for Phase 5
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-04-10T22:56:53.020Z"
+status: executing
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-04-10T23:48:38.205Z"
 last_activity: 2026-04-10
 progress:
   total_phases: 6
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 3
+  total_plans: 4
+  completed_plans: 4
 ---
 
 # Project State
@@ -20,13 +20,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-10)
 
 **Core value:** Right-click any folder in Windows 11 Explorer -> Claude Code opens in that directory. One click, no terminal juggling.
-**Current focus:** Milestone v1.1.0 — Enhanced Settings (Phase 5: Enhanced Settings UI)
+**Current focus:** Phase 06 — dll-integration
 
 ## Current Position
 
-Phase: 6
-Plan: Not started
-Status: Ready for Phase 5
+Phase: 06 (dll-integration) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-04-10
 
 ## Progress Bar
@@ -50,6 +50,7 @@ v1.1.0 decisions:
 - Phase 5 covers all Settings UI work including INT-02 (persistence); Phase 6 covers DLL reads (INT-01) and multi-channel flag passing (CHN-04)
 - Channel entries stored as a delimited registry value under HKCU:\Software\ClaudeFromHere
 - [Phase 05]: Code-behind pattern (no MVVM) for WPF settings form, matching existing WinForms architecture
+- [Phase 06-dll-integration]: DLL channel splitter uses inline wcstok_s with in-place tokenization, trim, empty-skip, and hard 32-entry cap — no helper function, no dynamic allocation
 
 ### Pending Todos
 
@@ -61,6 +62,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-10T21:42:49.957Z
-Stopped at: Completed 05-01-PLAN.md
+Last session: 2026-04-10T23:48:38.203Z
+Stopped at: Completed 06-01-PLAN.md
 Resume file: None
