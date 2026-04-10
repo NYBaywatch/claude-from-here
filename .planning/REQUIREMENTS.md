@@ -29,10 +29,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Installation
 
-- [ ] **INST-01**: User can install via a single `.exe` installer that handles all MSIX registration, cert import, and file deployment
-- [ ] **INST-02**: User can cleanly uninstall, removing all MSIX registration, files, and registry entries
-- [ ] **INST-03**: Installer works across different Windows 11 setups (different user profiles, install locations)
-- [ ] **INST-04**: Upgrade installs work (reinstall over existing version without manual uninstall)
+- [x] **INST-01**: User can install via a single `.exe` installer that handles all MSIX registration, cert import, and file deployment
+- [x] **INST-02**: User can cleanly uninstall, removing all MSIX registration, files, and registry entries
+- [x] **INST-03**: Installer works across different Windows 11 setups (different user profiles, install locations)
+- [x] **INST-04**: Upgrade installs work (reinstall over existing version without manual uninstall)
 
 ### Distribution
 
@@ -90,10 +90,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CONF-01 | Phase 2 | Complete |
 | CONF-02 | Phase 2 | Complete |
 | CONF-03 | Phase 2 | Complete |
-| INST-01 | Phase 3 | Pending |
-| INST-02 | Phase 3 | Pending |
-| INST-03 | Phase 3 | Pending |
-| INST-04 | Phase 3 | Pending |
+| INST-01 | Phase 3 | Complete |
+| INST-02 | Phase 3 | Complete |
+| INST-03 | Phase 3 | Complete |
+| INST-04 | Phase 3 | Complete |
 | DIST-01 | Phase 4 | Pending |
 | DIST-02 | Phase 4 | Pending |
 
