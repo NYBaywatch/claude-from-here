@@ -1,3 +1,5 @@
 build/
 *.pfx
 cert-password.txt
+src/*/obj/
+src/*/bin/
