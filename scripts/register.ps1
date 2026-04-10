@@ -148,6 +148,25 @@ if (-not $SkipBuild) {
     } else {
         Write-Warning "    Stub EXE not found at $ExeReleasePath -- package may fail validation"
     }
+
+    # Build config app (WinForms .NET 4.8)
+    Write-Host "    Building config app (ClaudeFromHereConfig)..."
+    $ConfigCsproj = "$PSScriptRoot\..\src\ClaudeFromHereConfig\ClaudeFromHereConfig.csproj"
+    if (Test-Path $ConfigCsproj) {
+        Invoke-ExternalTool "dotnet build config app" "dotnet" @(
+            "build", $ConfigCsproj,
+            "--configuration", "Release",
+            "--nologo",
+            "-v", "minimal"
+        )
+        if (Test-Path "$BuildDir\ClaudeFromHereConfig.exe") {
+            Write-Host "    Config app ready at: $BuildDir\ClaudeFromHereConfig.exe"
+        } else {
+            Write-Warning "    Config app build succeeded but exe not found at $BuildDir\ClaudeFromHereConfig.exe"
+        }
+    } else {
+        Write-Warning "    Config app .csproj not found at $ConfigCsproj -- skipping config app build"
+    }
 } else {
     Write-Step "Step 0: Skipped (SkipBuild specified)"
 
@@ -155,6 +174,18 @@ if (-not $SkipBuild) {
         throw "SkipBuild specified but DLL not found at: $BuildDir\ClaudeFromHere.dll"
     }
     Write-Host "    Using existing DLL: $BuildDir\ClaudeFromHere.dll"
+
+    # Still build config app even with -SkipBuild (it's a dotnet project, not CMake)
+    $ConfigCsproj = "$PSScriptRoot\..\src\ClaudeFromHereConfig\ClaudeFromHereConfig.csproj"
+    if (Test-Path $ConfigCsproj) {
+        Write-Host "    Building config app..."
+        Invoke-ExternalTool "dotnet build config app" "dotnet" @(
+            "build", $ConfigCsproj,
+            "--configuration", "Release",
+            "--nologo",
+            "-v", "minimal"
+        )
+    }
 }
 
 # ---------------------------------------------------------------------------
