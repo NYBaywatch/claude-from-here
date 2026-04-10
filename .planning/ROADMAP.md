@@ -50,7 +50,7 @@ Plans:
 Plans:
 - [x] 02-01-PLAN.md — DLL enhancement: path detection, registry flag reads, improved error dialogs
 - [x] 02-02-PLAN.md — WinForms config app: settings UI, registry read/write, path detection display
-- [ ] 02-03-PLAN.md — Integration: register.ps1 update and end-to-end verification
+- [x] 02-03-PLAN.md — Integration: register.ps1 update and end-to-end verification
 
 ### Phase 3: Installer
 **Goal**: A single `.exe` installer handles all setup steps (cert import, MSIX registration, file deployment) and a clean uninstaller removes everything, with upgrade installs working without manual intervention
