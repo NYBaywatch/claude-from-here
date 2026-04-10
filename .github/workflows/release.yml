@@ -1,0 +1,170 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write   # needed to create releases
+  id-token: write   # needed for OIDC to Azure
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      # -----------------------------------------------------------------------
+      # Checkout
+      # -----------------------------------------------------------------------
+      - uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # Step 1: Build C++ DLL via CMake + MSVC
+      # -----------------------------------------------------------------------
+      - name: Configure CMake
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+
+      - name: Build DLL
+        run: cmake --build build --config Release
+
+      - name: Copy DLL to build root
+        run: |
+          Copy-Item build\Release\ClaudeFromHere.dll build\ClaudeFromHere.dll
+          Copy-Item build\Release\ClaudeFromHere.exe build\ClaudeFromHere.exe
+        shell: pwsh
+
+      # -----------------------------------------------------------------------
+      # Step 2: Build config app (.NET)
+      # -----------------------------------------------------------------------
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Build config app
+        run: dotnet build src/ClaudeFromHereConfig/ClaudeFromHereConfig.csproj --configuration Release --nologo
+        shell: pwsh
+
+      # -----------------------------------------------------------------------
+      # Step 3: Copy assets and pack MSIX
+      # Dynamic MakeAppx discovery avoids hardcoded SDK version path (Pitfall 2)
+      # -----------------------------------------------------------------------
+      - name: Copy assets and pack MSIX
+        run: |
+          Copy-Item assets\claude.ico build\claude.ico
+          Copy-Item package\AppxManifest.xml build\AppxManifest.xml
+          if (-not (Test-Path build\Assets)) { New-Item -ItemType Directory -Path build\Assets | Out-Null }
+          Copy-Item package\Assets\* build\Assets -Recurse -Force
+
+          $makeappx = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Recurse -Filter "makeappx.exe" |
+              Where-Object { $_.FullName -match "x64" } |
+              Sort-Object FullName -Descending |
+              Select-Object -First 1 -ExpandProperty FullName
+          if (-not $makeappx) { throw "makeappx.exe not found in Windows Kits" }
+          Write-Host "Using MakeAppx: $makeappx"
+
+          & $makeappx pack /o /d package /nv /p build\ClaudeFromHere.msix
+        shell: pwsh
+
+      # -----------------------------------------------------------------------
+      # Step 4: Sign MSIX with Azure Trusted Signing (OIDC — no stored secrets)
+      # See Pitfall 3: federated credential subject must be refs/tags/v*
+      # -----------------------------------------------------------------------
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - uses: azure/artifact-signing-action@v1
+        with:
+          endpoint: https://eus.codesigning.azure.net/
+          signing-account-name: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ secrets.AZURE_SIGNING_PROFILE }}
+          files-folder: build
+          files-folder-filter: msix
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      # -----------------------------------------------------------------------
+      # Step 5: Install Inno Setup (not pre-installed on windows-latest — Pitfall 1)
+      # -----------------------------------------------------------------------
+      - name: Install Inno Setup
+        run: choco install innosetup --yes --no-progress
+        shell: pwsh
+
+      # -----------------------------------------------------------------------
+      # Step 6: Build installer with Inno Setup
+      # -----------------------------------------------------------------------
+      - name: Build installer
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { throw "Inno Setup not found at: $iscc" }
+          & $iscc installer\ClaudeFromHere.iss
+        shell: pwsh
+
+      # -----------------------------------------------------------------------
+      # Step 7: Smoke test — silent install, MSIX verification, file check, uninstall
+      # UI automation for context menu verification is best-effort per D-16 — skipped in CI
+      # See Pitfall 4: smoke test verifies registration + files, not visual context menu
+      # See Pitfall 7: uninstaller found dynamically
+      # -----------------------------------------------------------------------
+      - name: Smoke test installer
+        run: |
+          # Silent install
+          Start-Process -Wait -FilePath "dist\ClaudeFromHere-Setup.exe" -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES"
+
+          # Verify MSIX registered
+          $pkg = Get-AppxPackage -Name "ClaudeFromHere" -ErrorAction SilentlyContinue
+          if (-not $pkg) { throw "MSIX package not registered after install" }
+          Write-Host "PASS: Package registered: $($pkg.PackageFullName)"
+
+          # Verify files deployed
+          $installDir = "$env:LOCALAPPDATA\ClaudeFromHere"
+          $required = @("ClaudeFromHere.dll", "ClaudeFromHere.exe", "ClaudeFromHere.msix", "claude.ico", "AppxManifest.xml")
+          foreach ($f in $required) {
+            if (-not (Test-Path "$installDir\$f")) { throw "Missing file: $installDir\$f" }
+          }
+          Write-Host "PASS: All expected files present in $installDir"
+
+          # Silent uninstall — find uninstaller dynamically (Pitfall 7)
+          $uninstaller = Get-ChildItem "$installDir" -Filter "unins*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($uninstaller) {
+            Start-Process -Wait -FilePath $uninstaller.FullName -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES"
+          } else {
+            Write-Host "WARN: Uninstaller not found — skipping uninstall verification"
+          }
+
+          # Verify MSIX unregistered
+          Start-Sleep -Seconds 2
+          $pkgAfter = Get-AppxPackage -Name "ClaudeFromHere" -ErrorAction SilentlyContinue
+          if ($pkgAfter) { Write-Host "WARN: MSIX still registered after uninstall (may need Explorer restart)" }
+          else { Write-Host "PASS: Uninstall clean." }
+
+          Write-Host "Smoke test complete."
+        shell: pwsh
+
+      # -----------------------------------------------------------------------
+      # Step 8: Upload installer artifact (always, for debugging failed runs)
+      # -----------------------------------------------------------------------
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: installer
+          path: dist/ClaudeFromHere-Setup.exe
+
+      # -----------------------------------------------------------------------
+      # Step 9: Create GitHub Release with installer attached (per D-05, D-06, D-07)
+      # -----------------------------------------------------------------------
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/ClaudeFromHere-Setup.exe
+          fail_on_unmatched_files: true
+          generate_release_notes: false
+          body: |
+            ## Install
+
+            Download **ClaudeFromHere-Setup.exe** below and run it. No admin required.
+
+            Requires Windows 11.
