@@ -75,7 +75,12 @@ Plans:
   1. The GitHub repository has a published Release with the installer `.exe` as a downloadable artifact
   2. The README documents installation steps, uninstallation steps, and common troubleshooting scenarios
   3. A clean Windows 11 machine can install and use the extension using only the README and the installer from GitHub Releases
-**Plans**: TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — README, LICENSE, and .gitignore for public repo
+- [ ] 04-02-PLAN.md — GitHub Actions release workflow (CI/CD pipeline)
+- [ ] 04-03-PLAN.md — Media assets, repo cleanup, and v1.0.0 release
 
 ## Progress
 
@@ -87,4 +92,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Foundation | 2/2 | Complete |  |
 | 2. Launcher and Config | 2/3 | In Progress|  |
 | 3. Installer | 0/2 | Not started | - |
-| 4. Distribution | 0/TBD | Not started | - |
+| 4. Distribution | 0/3 | Not started | - |
