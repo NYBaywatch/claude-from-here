@@ -45,23 +45,23 @@ Requirements for Enhanced Settings milestone. Each maps to roadmap phases.
 
 ### CLI Flags
 
-- [ ] **CFG-01**: User can enable `-c` (continue last conversation) via checkbox in Settings
-- [ ] **CFG-02**: User can enable `-r` (resume) via checkbox in Settings
-- [ ] **CFG-03**: User can enable `--dangerously-skip-permissions` via checkbox, visually flagged as unsafe (red/warning styling)
-- [ ] **CFG-04**: User can enable `--allow-dangerously-skip-permissions` via checkbox, visually flagged as unsafe (red/warning styling)
-- [ ] **CFG-05**: User can set `--remote-control-session-name-prefix <prefix>` via text input in Settings
+- [x] **CFG-01**: User can enable `-c` (continue last conversation) via checkbox in Settings
+- [x] **CFG-02**: User can enable `-r` (resume) via checkbox in Settings
+- [x] **CFG-03**: User can enable `--dangerously-skip-permissions` via checkbox, visually flagged as unsafe (red/warning styling)
+- [x] **CFG-04**: User can enable `--allow-dangerously-skip-permissions` via checkbox, visually flagged as unsafe (red/warning styling)
+- [x] **CFG-05**: User can set `--remote-control-session-name-prefix <prefix>` via text input in Settings
 
 ### Channels
 
-- [ ] **CHN-01**: User can add a channel from preset list (telegram, discord) via dropdown in Settings
-- [ ] **CHN-02**: User can add a custom channel entry via freeform text input
-- [ ] **CHN-03**: User can remove individual channel entries from the list
+- [x] **CHN-01**: User can add a channel from preset list (telegram, discord) via dropdown in Settings
+- [x] **CHN-02**: User can add a custom channel entry via freeform text input
+- [x] **CHN-03**: User can remove individual channel entries from the list
 - [ ] **CHN-04**: Multiple `--channels` flags are passed to Claude Code (one per entry)
 
 ### Integration
 
 - [ ] **INT-01**: C++ DLL reads new registry keys and appends corresponding flags to the Claude Code command line
-- [ ] **INT-02**: Settings persist across app restarts (registry storage, consistent with existing pattern)
+- [x] **INT-02**: Settings persist across app restarts (registry storage, consistent with existing pattern)
 
 ## Future Requirements
 
@@ -116,17 +116,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INST-04 | Phase 3 | Complete |
 | DIST-01 | Phase 4 | Complete |
 | DIST-02 | Phase 4 | Complete |
-| CFG-01 | Phase 5 | Pending |
-| CFG-02 | Phase 5 | Pending |
-| CFG-03 | Phase 5 | Pending |
-| CFG-04 | Phase 5 | Pending |
-| CFG-05 | Phase 5 | Pending |
-| CHN-01 | Phase 5 | Pending |
-| CHN-02 | Phase 5 | Pending |
-| CHN-03 | Phase 5 | Pending |
+| CFG-01 | Phase 5 | Complete |
+| CFG-02 | Phase 5 | Complete |
+| CFG-03 | Phase 5 | Complete |
+| CFG-04 | Phase 5 | Complete |
+| CFG-05 | Phase 5 | Complete |
+| CHN-01 | Phase 5 | Complete |
+| CHN-02 | Phase 5 | Complete |
+| CHN-03 | Phase 5 | Complete |
 | CHN-04 | Phase 6 | Pending |
 | INT-01 | Phase 6 | Pending |
-| INT-02 | Phase 5 | Pending |
+| INT-02 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 16 total, 16 complete

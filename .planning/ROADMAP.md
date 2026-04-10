@@ -96,8 +96,11 @@ Plans:
   3. User can type a prefix into the remote-control session name prefix field and have it persist across app restarts
   4. User can add channels from a preset dropdown (telegram, discord) or via freeform text, see them in a list, and remove individual entries
   5. All new settings are written to registry at HKCU:\Software\ClaudeFromHere using the existing storage pattern
-**Plans**: TBD
-**UI hint**: yes
+**Plans:** 1/2 plans executed
+
+Plans:
+- [x] 05-01-PLAN.md — WPF rewrite: project retarget, dark theme, three-tab UI with all controls, code-behind logic
+- [ ] 05-02-PLAN.md — Build pipeline update and UI verification checkpoint
 
 ### Phase 6: DLL Integration
 **Goal**: The C++ DLL reads all new registry keys written by Phase 5 and appends the corresponding flags to the Claude Code command line on every launch
@@ -112,7 +115,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -120,5 +123,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 2. Launcher and Config | 2/3 | In Progress | |
 | 3. Installer | 0/2 | Not started | - |
 | 4. Distribution | 2/3 | In Progress | |
-| 5. Enhanced Settings UI | 0/? | Not started | - |
+| 5. Enhanced Settings UI | 1/2 | In Progress|  |
 | 6. DLL Integration | 0/? | Not started | - |
