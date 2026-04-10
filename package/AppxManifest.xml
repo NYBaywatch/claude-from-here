@@ -13,7 +13,7 @@
 
   <Identity
     Name="ClaudeFromHere"
-    Publisher="CN=ClaudeFromHere"
+    Publisher="CN=Joseph Fago, O=Joseph Fago, L=Newark, S=New Jersey, C=US"
     Version="1.0.0.0"
     ProcessorArchitecture="x64" />
 
