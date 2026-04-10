@@ -100,7 +100,7 @@ Plans:
 
 Plans:
 - [x] 05-01-PLAN.md — WPF rewrite: project retarget, dark theme, three-tab UI with all controls, code-behind logic
-- [ ] 05-02-PLAN.md — Build pipeline update and UI verification checkpoint
+- [x] 05-02-PLAN.md — Build pipeline update and UI verification checkpoint
 
 ### Phase 6: DLL Integration
 **Goal**: The C++ DLL reads all new registry keys written by Phase 5 and appends the corresponding flags to the Claude Code command line on every launch
