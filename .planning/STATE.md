@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-04-10T18:02:56.065Z"
+stopped_at: "Checkpoint Task 2 in 04-03-PLAN.md: awaiting media capture, repo cleanup, Azure OIDC config, and v1.0.0 tag push"
+last_updated: "2026-04-10T18:05:08.143Z"
 last_activity: 2026-04-10
 progress:
   total_phases: 4
@@ -58,6 +58,7 @@ Progress: [███████░░░] 71%
 | Phase 02-launcher-and-config P02 | 15 | 2 tasks | 4 files |
 | Phase 04-distribution P01 | 57s | 2 tasks | 3 files |
 | Phase 04-distribution P02 | 1 | 1 tasks | 1 files |
+| Phase 04-distribution P03 | 2 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,8 @@ Recent decisions affecting current work:
 - [Phase 04-distribution]: Dynamic MakeAppx discovery via Get-ChildItem to handle varying Windows SDK versions on windows-latest runner
 - [Phase 04-distribution]: OIDC workload identity (id-token: write) for Azure Trusted Signing avoids stored client secrets
 - [Phase 04-distribution]: Smoke test verifies MSIX registration + file deployment only; UI context menu verification skipped per D-16
+- [Phase 04-distribution]: docs/.gitkeep placeholder commits directory to git before media assets captured by user
+- [Phase 04-distribution]: Repo cleanup deferred to after media capture and before v1.0.0 tag (Pitfall 5 ordering)
 
 ### Pending Todos
 
@@ -95,6 +98,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-10T18:02:56.063Z
-Stopped at: Completed 04-02-PLAN.md
+Last session: 2026-04-10T18:05:02.148Z
+Stopped at: Checkpoint Task 2 in 04-03-PLAN.md: awaiting media capture, repo cleanup, Azure OIDC config, and v1.0.0 tag push
 Resume file: None
