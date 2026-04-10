@@ -4,3 +4,5 @@ dist/
 cert-password.txt
 src/*/obj/
 src/*/bin/
+.planning/
+.claude/
