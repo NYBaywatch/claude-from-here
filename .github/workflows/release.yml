@@ -18,7 +18,7 @@ jobs:
       # -----------------------------------------------------------------------
       # Checkout
       # -----------------------------------------------------------------------
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # -----------------------------------------------------------------------
       # Step 1: Build C++ DLL via CMake + MSVC
@@ -38,7 +38,7 @@ jobs:
       # -----------------------------------------------------------------------
       # Step 2: Build config app (.NET)
       # -----------------------------------------------------------------------
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '8.x'
 
@@ -71,7 +71,7 @@ jobs:
       # Step 4: Sign MSIX with Azure Trusted Signing (OIDC — no stored secrets)
       # See Pitfall 3: federated credential subject must be refs/tags/v*
       # -----------------------------------------------------------------------
-      - uses: azure/login@v2
+      - uses: azure/login@v3
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -149,7 +149,7 @@ jobs:
       # -----------------------------------------------------------------------
       # Step 8: Upload installer artifact (always, for debugging failed runs)
       # -----------------------------------------------------------------------
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: installer
