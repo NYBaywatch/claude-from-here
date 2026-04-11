@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0.0
+milestone: v1.1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 06-01-PLAN.md
-last_updated: "2026-04-10T23:48:38.205Z"
+stopped_at: Completed 06-02-PLAN.md (runtime verification deferred to release UAT)
+last_updated: "2026-04-11T00:17:45Z"
 last_activity: 2026-04-10
 progress:
   total_phases: 6
-  completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
+  completed_phases: 2
+  total_plans: 5
+  completed_plans: 5
 ---
 
 # Project State
@@ -24,14 +24,14 @@ See: .planning/PROJECT.md (updated 2026-04-10)
 
 ## Current Position
 
-Phase: 06 (dll-integration) — EXECUTING
-Plan: 2 of 2
-Status: Ready to execute
+Phase: 06 (dll-integration) — COMPLETE (runtime verification deferred to v1.1.0 release UAT)
+Plan: 2 of 2 — DONE
+Status: Phase 6 source + build complete; three success-criteria runtime tests deferred to fresh-binary UAT post-release-tag (see 06-02-VERIFICATION.md)
 Last activity: 2026-04-10
 
 ## Progress Bar
 
-[----------] 0% — 0/2 phases complete
+[##########] 100% — 2/2 v1.1.0 phases complete (Phase 5 + Phase 6 source/build)
 
 ## Accumulated Context
 
@@ -51,17 +51,18 @@ v1.1.0 decisions:
 - Channel entries stored as a delimited registry value under HKCU:\Software\ClaudeFromHere
 - [Phase 05]: Code-behind pattern (no MVVM) for WPF settings form, matching existing WinForms architecture
 - [Phase 06-dll-integration]: DLL channel splitter uses inline wcstok_s with in-place tokenization, trim, empty-skip, and hard 32-entry cap — no helper function, no dynamic allocation
+- [Phase 06-02]: Phase 6 manual verification deferred to post-release fresh-binary UAT against the signed v1.1.0 installer; the three success-criteria test cases are preserved verbatim in 06-02-VERIFICATION.md and must be executed and converted from DEFERRED to PASS during release UAT
 
 ### Pending Todos
 
-None yet.
+- Post-release-tag: install v1.1.0 signed installer on user's machine and execute the three deferred test cases in `.planning/phases/06-dll-integration/06-02-VERIFICATION.md` (Test A: all flags on, Test B: multi-channels, Test C: all-off byte-identical), recording observed `claude ...` lines and updating each status from DEFERRED to PASS.
 
 ### Blockers/Concerns
 
-None yet.
+None.
 
 ## Session Continuity
 
-Last session: 2026-04-10T23:48:38.203Z
-Stopped at: Completed 06-01-PLAN.md
+Last session: 2026-04-11T00:17:45Z
+Stopped at: Completed 06-02-PLAN.md (Phase 6 build done, runtime verification deferred to release UAT)
 Resume file: None

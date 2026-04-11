@@ -114,7 +114,7 @@ Plans:
 
 Plans:
 - [x] 06-01-extend-launchclaude-PLAN.md — Extend _LaunchClaude in src/ClaudeFromHere.cpp: bump szFlags buffer, read six new HKCU keys, append flags in D-08 order, channel splitter
-- [ ] 06-02-build-and-verify-PLAN.md — Build the DLL, reinstall so Explorer loads it, manually verify the three Phase 6 success criteria including the all-off byte-identical case
+- [x] 06-02-build-and-verify-PLAN.md — Build the DLL, reinstall so Explorer loads it; runtime verification of the three Phase 6 success criteria DEFERRED to post-release v1.1.0 fresh-binary UAT (per user decision and D-16)
 
 ## Progress
 
@@ -128,4 +128,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 3. Installer | 0/2 | Not started | - |
 | 4. Distribution | 2/3 | In Progress | |
 | 5. Enhanced Settings UI | 1/2 | In Progress|  |
-| 6. DLL Integration | 0/? | Not started | - |
+| 6. DLL Integration | 2/2 | Complete (runtime verification deferred to release UAT) | 2026-04-10 |
