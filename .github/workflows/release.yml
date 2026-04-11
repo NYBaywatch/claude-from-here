@@ -102,7 +102,15 @@ jobs:
         run: |
           $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { throw "Inno Setup not found at: $iscc" }
-          & $iscc installer\ClaudeFromHere.iss
+
+          # Derive installer AppVersion from the git tag that triggered this run.
+          # github.ref_name is the tag (e.g. "v1.1.0"); strip the leading "v".
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          if (-not $version) { throw "Unable to derive version from ref: ${{ github.ref_name }}" }
+          Write-Host "Building installer for AppVersion=$version"
+
+          & $iscc "/DMyAppVersion=$version" installer\ClaudeFromHere.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
         shell: pwsh
 
       # -----------------------------------------------------------------------

@@ -9,13 +9,24 @@
 ;   - Preserves HKCU\Software\ClaudeFromHere user settings across uninstall/reinstall
 
 ; ---------------------------------------------------------------------------
+; Preprocessor defines
+; ---------------------------------------------------------------------------
+; MyAppVersion is overridden at compile time by CI via:
+;   ISCC.exe /DMyAppVersion=1.2.3 installer\ClaudeFromHere.iss
+; The default below only applies to local/dev builds that don't pass /D.
+
+#ifndef MyAppVersion
+  #define MyAppVersion "0.0.0-dev"
+#endif
+
+; ---------------------------------------------------------------------------
 ; [Setup]
 ; ---------------------------------------------------------------------------
 
 [Setup]
 AppId={{648d3dc8-04a3-461b-b4f8-23753c3ffa60}
 AppName=Claude From Here
-AppVersion=1.0.0
+AppVersion={#MyAppVersion}
 AppPublisher=Claude From Here
 DefaultDirName={localappdata}\ClaudeFromHere
 PrivilegesRequired=lowest
