@@ -26,10 +26,12 @@ Right-click any folder or folder background in Windows 11 Explorer → Claude Co
 
 - [x] GitHub-ready: README, license, release artifacts — Validated in Phase 4
 
+- [x] Extended CLI flag controls in Settings app (continue, resume, skip-permissions, remote-control prefix) — Source verified in Phase 6; runtime verification deferred to post-v1.1.0 release UAT
+- [x] Multi-channel plugin support via add/remove list (--channels) — Source verified in Phase 6; runtime verification deferred to post-v1.1.0 release UAT
+
 ### Active
 
-- [ ] Extended CLI flag controls in Settings app (continue, resume, skip-permissions, remote-control prefix)
-- [ ] Multi-channel plugin support via add/remove list (--channels)
+(none — milestone v1.1.0 source work complete, pending release-binary UAT)
 
 ### Out of Scope
 
@@ -91,4 +93,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-10 — Milestone v1.1.0 started*
+*Last updated: 2026-04-11 — Phase 6 DLL Integration complete (runtime UAT deferred to release binary)*
