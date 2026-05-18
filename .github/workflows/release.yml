@@ -114,6 +114,23 @@ jobs:
         shell: pwsh
 
       # -----------------------------------------------------------------------
+      # Step 6b: Sign installer EXE with Azure Trusted Signing
+      # Mirrors Step 4 but targets dist/*.exe instead of build/*.msix.
+      # Runs before the smoke test so we verify the same binary users download.
+      # Azure login from Step 4 is still valid (token TTL ~1h).
+      # -----------------------------------------------------------------------
+      - uses: azure/artifact-signing-action@v1
+        with:
+          endpoint: https://eus.codesigning.azure.net/
+          signing-account-name: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ secrets.AZURE_SIGNING_PROFILE }}
+          files-folder: dist
+          files-folder-filter: exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      # -----------------------------------------------------------------------
       # Step 7: Smoke test — silent install, MSIX verification, file check, uninstall
       # UI automation for context menu verification is best-effort per D-16 — skipped in CI
       # See Pitfall 4: smoke test verifies registration + files, not visual context menu
