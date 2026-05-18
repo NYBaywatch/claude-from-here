@@ -165,15 +165,24 @@ jobs:
 
       # -----------------------------------------------------------------------
       # Step 9: Create GitHub Release with installer attached (per D-05, D-06, D-07)
+      # Uses gh CLI directly (preinstalled on windows-latest) instead of a
+      # third-party action — removes a supply-chain dependency.
       # -----------------------------------------------------------------------
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: dist/ClaudeFromHere-Setup.exe
-          fail_on_unmatched_files: true
-          generate_release_notes: false
-          body: |
-            ## Install
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $installer = "dist/ClaudeFromHere-Setup.exe"
+          if (-not (Test-Path $installer)) {
+              throw "Installer not found at $installer (matches fail_on_unmatched_files: true)"
+          }
+          $notes = @'
+          ## Install
 
-            Download **ClaudeFromHere-Setup.exe** below and run it. No admin required.
+          Download **ClaudeFromHere-Setup.exe** below and run it. No admin required.
 
-            Requires Windows 11.
+          Requires Windows 11.
+          '@
+          gh release create "${{ github.ref_name }}" $installer --title "${{ github.ref_name }}" --notes "$notes"
+          if ($LASTEXITCODE -ne 0) { throw "gh release create failed with exit code $LASTEXITCODE" }
+        shell: pwsh
