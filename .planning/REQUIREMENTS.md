@@ -63,6 +63,17 @@ Requirements for Enhanced Settings milestone. Each maps to roadmap phases.
 - [x] **INT-01**: C++ DLL reads new registry keys and appends corresponding flags to the Claude Code command line — _source verified (06-01); runtime verification deferred to post-release v1.1.0 fresh-binary UAT (06-02)_
 - [x] **INT-02**: Settings persist across app restarts (registry storage, consistent with existing pattern)
 
+## v1.2 Requirements
+
+Requirements for the Effort-Level Submenu milestone (Phase 7).
+
+### Effort Submenu
+
+- [x] **EFRT-01**: User sees a second top-level flyout "Claude from here: effort" (alongside the unchanged one-click "Claude from here") on both folder and folder-background right-click — _source verified; runtime deferred to release-binary UAT_
+- [x] **EFRT-02**: Flyout offers Low/Medium/High/Extra high/Max; selecting one launches `claude --effort <level>` with the matching token plus existing configured flags — _source verified; runtime deferred to release-binary UAT_
+- [x] **EFRT-03**: The one-click "Claude from here" is unchanged — it passes no `--effort` flag (honors the user's global effort config), byte-identical to pre-Phase-7 output — _source verified; runtime deferred to release-binary UAT_
+- [x] **EFRT-04**: Effort value is a fixed, whitelisted enum chosen by menu selection (never free text) and validated before use, adding no command-line-injection surface
+
 ## Future Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -87,7 +98,7 @@ Deferred to future release. Tracked but not in current roadmap.
 |---------|--------|
 | Windows 10 support | Existing .reg files handle Win 10; modern menu requires Win 11 |
 | Desktop right-click | Not a common workflow for launching CLI tools |
-| Submenu with multiple options | Single menu item keeps it simple; submenu API is experimental |
+| ~~Submenu with multiple options~~ | _Superseded by Phase 7 (v1.2): the effort flyout adds a second top-level submenu while keeping the one-click default_ |
 | Microsoft Store distribution | Too much overhead for a dev tool |
 | Auto-update mechanism | Overkill for v1; users can re-download from GitHub |
 | WSL/Linux shell variant | Different platform, different project |
@@ -127,12 +138,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CHN-04 | Phase 6 | Complete (source verified; runtime deferred to release UAT) |
 | INT-01 | Phase 6 | Complete (source verified; runtime deferred to release UAT) |
 | INT-02 | Phase 5 | Complete |
+| EFRT-01 | Phase 7 | Complete (source verified; runtime deferred to release UAT) |
+| EFRT-02 | Phase 7 | Complete (source verified; runtime deferred to release UAT) |
+| EFRT-03 | Phase 7 | Complete (source verified; runtime deferred to release UAT) |
+| EFRT-04 | Phase 7 | Complete |
 
 **Coverage:**
 - v1 requirements: 16 total, 16 complete
 - v1.1 requirements: 11 total, 11 mapped
+- v1.2 requirements: 4 total, 4 mapped
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-08*
-*Last updated: 2026-04-10 — v1.1.0 roadmap phases assigned*
+*Last updated: 2026-06-24 — v1.2 effort-submenu (Phase 7) requirements added*
