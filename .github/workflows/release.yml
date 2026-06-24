@@ -23,8 +23,12 @@ jobs:
       # -----------------------------------------------------------------------
       # Step 1: Build C++ DLL via CMake + MSVC
       # -----------------------------------------------------------------------
+      # Don't pin the VS generator: GitHub's windows runner image now ships
+      # Visual Studio 2026 (image windows-2025-vs2026), so "Visual Studio 17 2022"
+      # no longer resolves. Omitting -G lets CMake auto-detect the latest installed
+      # VS, keeping this resilient across future runner image bumps.
       - name: Configure CMake
-        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+        run: cmake -S . -B build -A x64
 
       - name: Build DLL
         run: cmake --build build --config Release
