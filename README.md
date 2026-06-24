@@ -13,7 +13,7 @@ No registry hacks. No admin required. It installs per-user using a sparse MSIX p
 
 Works on folder right-click and folder background right-click. Open any project, any directory, instantly in Claude Code.
 
-![Claude from here context menu with effort submenu](docs/screenshot.png)
+![Claude from here context menu with effort submenu](docs/context-menu.png)
 
 ## Install
 
@@ -49,7 +49,7 @@ Requires Windows 11.
 
 Higher effort means more thorough reasoning; lower is faster and cheaper. The choice applies only to that launch — it doesn't change your global setting. It also stacks with whatever flags you've configured in Settings.
 
-![Effort submenu in dark mode](docs/screenshot-dark.png)
+![Effort submenu in dark mode](docs/context-menu-dark.png)
 
 ### Settings
 
