@@ -69,9 +69,9 @@ Requirements for the Effort-Level Submenu milestone (Phase 7).
 
 ### Effort Submenu
 
-- [x] **EFRT-01**: User sees a second top-level flyout "Claude from here: effort" (alongside the unchanged one-click "Claude from here") on both folder and folder-background right-click — _source verified; runtime deferred to release-binary UAT_
-- [x] **EFRT-02**: Flyout offers Low/Medium/High/Extra high/Max; selecting one launches `claude --effort <level>` with the matching token plus existing configured flags — _source verified; runtime deferred to release-binary UAT_
-- [x] **EFRT-03**: The one-click "Claude from here" is unchanged — it passes no `--effort` flag (honors the user's global effort config), byte-identical to pre-Phase-7 output — _source verified; runtime deferred to release-binary UAT_
+- [x] **EFRT-01**: "Claude from here" is a single top-level flyout (real Claude icon, no Windows package-grouping) on both folder and folder-background right-click — _source verified + dev-registered; visual UAT pending_
+- [x] **EFRT-02**: Flyout offers Default + Low/Medium/High/Extra high/Max; selecting a level launches `claude --effort <level>` with the matching token plus existing configured flags — _source verified; visual UAT pending_
+- [x] **EFRT-03**: The "Default" item passes no `--effort` flag (honors the user's global effort config), byte-identical to pre-Phase-7 output — _source verified; visual UAT pending_
 - [x] **EFRT-04**: Effort value is a fixed, whitelisted enum chosen by menu selection (never free text) and validated before use, adding no command-line-injection surface
 
 ## Future Requirements

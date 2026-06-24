@@ -57,8 +57,10 @@
 
       <Extensions>
 
-        <!-- Register the COM surrogate server (the DLL). Both CLSIDs live in the
-             same DLL: b2dd8803 = "Claude from here" (direct), d6aefcec = effort flyout. -->
+        <!-- Register the COM surrogate server (the DLL). One CLSID: the single
+             "Claude from here" command presents as a flyout at runtime via
+             EnumSubCommands (Default + effort levels) — no second verb, so Windows
+             does not group it under the package name. -->
         <com:Extension Category="windows.comServer">
           <com:ComServer>
             <com:SurrogateServer DisplayName="ClaudeFromHere">
@@ -66,25 +68,18 @@
                 Id="b2dd8803-e848-41d5-bb0b-598086308dcf"
                 Path="ClaudeFromHere.dll"
                 ThreadingModel="STA" />
-              <com:Class
-                Id="d6aefcec-19c4-46ec-b52d-14401dfd9079"
-                Path="ClaudeFromHere.dll"
-                ThreadingModel="STA" />
             </com:SurrogateServer>
           </com:ComServer>
         </com:Extension>
 
-        <!-- Wire both verbs to folder right-click AND folder-background right-click.
-             ClaudeFromHere = one-click default; ClaudeFromHereEffort = effort flyout. -->
+        <!-- Wire CLSID to folder right-click AND folder-background right-click -->
         <desktop4:Extension Category="windows.fileExplorerContextMenus">
           <desktop4:FileExplorerContextMenus>
             <desktop5:ItemType Type="Directory">
               <desktop5:Verb Id="ClaudeFromHere" Clsid="b2dd8803-e848-41d5-bb0b-598086308dcf" />
-              <desktop5:Verb Id="ClaudeFromHereEffort" Clsid="d6aefcec-19c4-46ec-b52d-14401dfd9079" />
             </desktop5:ItemType>
             <desktop5:ItemType Type="Directory\Background">
               <desktop5:Verb Id="ClaudeFromHere" Clsid="b2dd8803-e848-41d5-bb0b-598086308dcf" />
-              <desktop5:Verb Id="ClaudeFromHereEffort" Clsid="d6aefcec-19c4-46ec-b52d-14401dfd9079" />
             </desktop5:ItemType>
           </desktop4:FileExplorerContextMenus>
         </desktop4:Extension>
