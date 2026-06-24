@@ -13,7 +13,7 @@ No registry hacks. No admin required. It installs per-user using a sparse MSIX p
 
 Works on folder right-click and folder background right-click. Open any project, any directory, instantly in Claude Code.
 
-![Context Menu](docs/screenshot.png)
+![Claude from here context menu with effort submenu](docs/screenshot.png)
 
 ## Install
 
@@ -26,6 +26,7 @@ Requires Windows 11.
 ## Features
 
 - **Top-level context menu** — appears in the modern Win 11 menu, not buried under "Show more options"
+- **Effort level submenu** — pick the reasoning effort for the session (Low → Max), or **Default** to use your system default
 - **Folder and folder background** — right-click on a folder or inside a folder in File Explorer
 - **Auto-detects paths** — finds Windows Terminal and Claude Code wherever they're installed
 - **Custom icon** — Claude icon appears next to the menu item
@@ -36,8 +37,19 @@ Requires Windows 11.
 ## Usage
 
 1. Right-click any folder (or inside any folder) in File Explorer
-2. Click **Claude from here**
+2. Hover **Claude from here** and pick an effort level (or **Default**)
 3. Windows Terminal opens with Claude Code running in that directory
+
+### Effort level
+
+**Claude from here** is a submenu — hover it and choose the reasoning effort level for that Claude Code session:
+
+- **Default** — uses your system default effort. Launches `claude` with no `--effort` flag, so it honors your global setting (`CLAUDE_CODE_EFFORT_LEVEL` / `settings.json`).
+- **Low**, **Medium**, **High**, **Extra high**, **Max** — launch that session with `claude --effort <level>`.
+
+Higher effort means more thorough reasoning; lower is faster and cheaper. The choice applies only to that launch — it doesn't change your global setting. It also stacks with whatever flags you've configured in Settings.
+
+![Effort submenu in dark mode](docs/screenshot-dark.png)
 
 ### Settings
 
