@@ -1,0 +1,9 @@
+build/
+dist/
+*.pfx
+*.cer
+*cert-password.txt
+src/*/obj/
+src/*/bin/
+.planning/
+.claude/
