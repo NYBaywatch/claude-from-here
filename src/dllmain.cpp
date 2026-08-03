@@ -71,11 +71,7 @@ private:
     long m_cRef = 1;
 };
 
-// CClaudeFromHere is defined in ClaudeFromHere.cpp; we only need the forward decl here.
-// We include it via extern "C" CreateInstance below.
-
-// Include the full class so CreateInstance can instantiate it.
-// (Alternatively, expose a factory function from ClaudeFromHere.cpp)
+// CClaudeFromHere is defined in ClaudeFromHere.cpp; we instantiate it via this factory.
 extern IUnknown* CreateClaudeFromHereInstance();
 
 IFACEMETHODIMP CClassFactory::CreateInstance(IUnknown* pUnkOuter, REFIID riid, void** ppv)

@@ -1,8 +1,17 @@
 // ClaudeFromHere.cpp -- IExplorerCommand + IObjectWithSite implementation
 // CLSID: {b2dd8803-e848-41d5-bb0b-598086308dcf}
 //
-// Implements "Claude from here" Windows 11 modern context menu handler.
-// Handles both folder right-click (Directory) and folder-background right-click
+// Single top-level "Claude from here" command, presented as a flyout submenu
+// (ECF_HASSUBCOMMANDS). Subitems: Default + Low/Medium/High/Extra high/Max.
+//   * "Default" launches with no --effort (honors the user's global effort config).
+//   * Each level launches `claude --effort <level>`.
+//
+// One verb only: Windows 11 auto-groups *multiple* same-package verbs under the
+// package DisplayName (badged with the package logo, not our icon), which also
+// pushes subcommands too deep. A single flyout verb avoids that — it shows at top
+// level with claude.ico and its levels exactly one submenu deep.
+//
+// Handles folder right-click (Directory) and folder-background right-click
 // (Directory\Background) via IObjectWithSite traversal.
 
 #include <windows.h>
@@ -22,76 +31,41 @@ extern long    g_cDllRef;
 extern const CLSID CLSID_ClaudeFromHere;
 
 // -------------------------------------------------------------------------
-// CClaudeFromHere -- IExplorerCommand + IObjectWithSite
+// Shared helpers (path resolution, executable discovery, launch).
 // -------------------------------------------------------------------------
 
-class CClaudeFromHere : public IExplorerCommand, public IObjectWithSite
+namespace
 {
-public:
-    CClaudeFromHere() : _cRef(1), _punkSite(nullptr)
+    // Flyout subitems. `effort == nullptr` is the "Default" item (no --effort flag).
+    // Effort tokens are fixed code constants (never user free text) chosen by which
+    // item was clicked, so they add zero command-line injection surface.
+    struct MenuOption { PCWSTR effort; PCWSTR title; bool separatorBefore; };
+    const MenuOption kMenuOptions[] = {
+        { nullptr,   L"Default",     false },
+        { L"low",    L"Low",         true  },   // separator divides Default from the levels
+        { L"medium", L"Medium",      false },
+        { L"high",   L"High",        false },
+        { L"xhigh",  L"Extra high",  false },
+        { L"max",    L"Max",         false },
+    };
+    const int kMenuOptionCount = ARRAYSIZE(kMenuOptions);
+
+    // Defense-in-depth: validate an effort token against the whitelist before it ever
+    // reaches the command line. The flyout only passes table constants, but this
+    // guarantees nothing else can.
+    bool IsValidEffort(PCWSTR effort)
     {
-        InterlockedIncrement(&g_cDllRef);
+        if (!effort) return false;
+        static const PCWSTR kValid[] = { L"low", L"medium", L"high", L"xhigh", L"max" };
+        for (PCWSTR v : kValid)
+            if (wcscmp(effort, v) == 0)
+                return true;
+        return false;
     }
 
-    ~CClaudeFromHere()
+    // claude.ico lives alongside the DLL in the install/build directory.
+    HRESULT GetClaudeIconPath(LPWSTR* ppszIcon)
     {
-        if (_punkSite)
-        {
-            _punkSite->Release();
-            _punkSite = nullptr;
-        }
-        InterlockedDecrement(&g_cDllRef);
-    }
-
-    // -----------------------------------------------------------------------
-    // IUnknown
-    // -----------------------------------------------------------------------
-
-    IFACEMETHODIMP QueryInterface(REFIID riid, void** ppv) override
-    {
-        if (riid == IID_IUnknown || riid == IID_IExplorerCommand)
-        {
-            *ppv = static_cast<IExplorerCommand*>(this);
-        }
-        else if (riid == IID_IObjectWithSite)
-        {
-            *ppv = static_cast<IObjectWithSite*>(this);
-        }
-        else
-        {
-            *ppv = nullptr;
-            return E_NOINTERFACE;
-        }
-        AddRef();
-        return S_OK;
-    }
-
-    IFACEMETHODIMP_(ULONG) AddRef() override
-    {
-        return InterlockedIncrement(&_cRef);
-    }
-
-    IFACEMETHODIMP_(ULONG) Release() override
-    {
-        ULONG cRef = InterlockedDecrement(&_cRef);
-        if (cRef == 0)
-            delete this;
-        return cRef;
-    }
-
-    // -----------------------------------------------------------------------
-    // IExplorerCommand
-    // -----------------------------------------------------------------------
-
-    IFACEMETHODIMP GetTitle(IShellItemArray* /*psiItemArray*/, LPWSTR* ppszName) override
-    {
-        return SHStrDupW(L"Claude from here", ppszName);
-    }
-
-    IFACEMETHODIMP GetIcon(IShellItemArray* /*psiItemArray*/, LPWSTR* ppszIcon) override
-    {
-        // Derive path to claude.ico from DLL module location.
-        // The .ico is placed alongside the DLL in the install/build directory.
         WCHAR szPath[MAX_PATH];
         if (!GetModuleFileNameW(g_hModule, szPath, ARRAYSIZE(szPath)))
             return HRESULT_FROM_WIN32(GetLastError());
@@ -103,116 +77,42 @@ public:
         return SHStrDupW(szPath, ppszIcon);
     }
 
-    IFACEMETHODIMP GetToolTip(IShellItemArray* /*psiItemArray*/, LPWSTR* ppszInfotip) override
+    // FindExecutable: 3-stage detection (SearchPathW -> HKCU App Paths -> HKLM App Paths).
+    // Stage 4 (wt.exe execution alias) is handled in LaunchClaudeInDir after this call.
+    BOOL FindExecutable(PCWSTR exeName, PCWSTR appPathsSubkey, PWSTR szOut, DWORD cchOut)
     {
-        return SHStrDupW(L"Open Claude Code in this directory", ppszInfotip);
+        // Stage 1: SearchPathW (PATH, includes %LOCALAPPDATA%\Microsoft\WindowsApps)
+        if (SearchPathW(nullptr, exeName, nullptr, cchOut, szOut, nullptr))
+            return TRUE;
+
+        // Stage 2: HKCU App Paths (wt.exe Store install registers here, not HKLM)
+        DWORD cb = cchOut * sizeof(WCHAR);
+        if (RegGetValueW(HKEY_CURRENT_USER, appPathsSubkey, nullptr,
+                RRF_RT_REG_SZ | RRF_ZEROONFAILURE, nullptr, szOut, &cb) == ERROR_SUCCESS
+            && szOut[0])
+            return TRUE;
+
+        // Stage 3: HKLM App Paths (winget / system-wide installs)
+        cb = cchOut * sizeof(WCHAR);
+        if (RegGetValueW(HKEY_LOCAL_MACHINE, appPathsSubkey, nullptr,
+                RRF_RT_REG_SZ | RRF_ZEROONFAILURE, nullptr, szOut, &cb) == ERROR_SUCCESS
+            && szOut[0])
+            return TRUE;
+
+        return FALSE;
     }
 
-    IFACEMETHODIMP GetCanonicalName(GUID* pguidCommandName) override
-    {
-        *pguidCommandName = CLSID_ClaudeFromHere;
-        return S_OK;
-    }
-
-    IFACEMETHODIMP GetState(IShellItemArray* /*psiItemArray*/, BOOL /*fOkToBeSlow*/,
-                            EXPCMDSTATE* pCmdState) override
-    {
-        *pCmdState = ECS_ENABLED;
-        return S_OK;
-    }
-
-    IFACEMETHODIMP GetFlags(EXPCMDFLAGS* pFlags) override
-    {
-        *pFlags = ECF_DEFAULT;
-        return S_OK;
-    }
-
-    IFACEMETHODIMP EnumSubCommands(IEnumExplorerCommand** ppEnum) override
-    {
-        *ppEnum = nullptr;
-        return E_NOTIMPL;
-    }
-
-    IFACEMETHODIMP Invoke(IShellItemArray* psiItemArray, IBindCtx* /*pbc*/) override
-    {
-        PWSTR pszPath = nullptr;
-        HRESULT hr = E_FAIL;
-
-        // Path A: Folder right-click — psiItemArray contains the selected folder item.
-        if (psiItemArray)
-        {
-            IShellItem* psi = nullptr;
-            hr = psiItemArray->GetItemAt(0, &psi);
-            if (SUCCEEDED(hr) && psi)
-            {
-                hr = psi->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, &pszPath);
-                psi->Release();
-            }
-        }
-
-        // Path B: Folder background right-click — traverse IObjectWithSite chain.
-        if (FAILED(hr) || !pszPath)
-        {
-            hr = _GetFolderPathFromSite(&pszPath);
-        }
-
-        if (SUCCEEDED(hr) && pszPath)
-        {
-            _LaunchClaude(pszPath);
-            CoTaskMemFree(pszPath);
-        }
-
-        return S_OK;
-    }
-
-    // -----------------------------------------------------------------------
-    // IObjectWithSite
-    // -----------------------------------------------------------------------
-
-    IFACEMETHODIMP SetSite(IUnknown* punkSite) override
-    {
-        if (_punkSite)
-        {
-            _punkSite->Release();
-            _punkSite = nullptr;
-        }
-        if (punkSite)
-        {
-            _punkSite = punkSite;
-            _punkSite->AddRef();
-        }
-        return S_OK;
-    }
-
-    IFACEMETHODIMP GetSite(REFIID riid, void** ppvSite) override
-    {
-        if (!_punkSite)
-        {
-            *ppvSite = nullptr;
-            return E_FAIL;
-        }
-        return _punkSite->QueryInterface(riid, ppvSite);
-    }
-
-private:
-    long     _cRef;
-    IUnknown* _punkSite;
-
-    // -----------------------------------------------------------------------
-    // _GetFolderPathFromSite
     // Traverses: IServiceProvider -> SID_STopLevelBrowser/IShellBrowser ->
     //            QueryActiveShellView/IShellView -> IFolderView -> GetFolder/IShellItem
-    // -----------------------------------------------------------------------
-
-    HRESULT _GetFolderPathFromSite(PWSTR* ppszPath)
+    // Used for the folder-background case where no item array is supplied.
+    HRESULT GetFolderPathFromSite(IUnknown* punkSite, PWSTR* ppszPath)
     {
         *ppszPath = nullptr;
-
-        if (!_punkSite)
+        if (!punkSite)
             return E_FAIL;
 
         IServiceProvider* psp = nullptr;
-        HRESULT hr = _punkSite->QueryInterface(IID_PPV_ARGS(&psp));
+        HRESULT hr = punkSite->QueryInterface(IID_PPV_ARGS(&psp));
         if (FAILED(hr))
             return hr;
 
@@ -245,40 +145,36 @@ private:
         return hr;
     }
 
-    // -----------------------------------------------------------------------
-    // _LaunchClaude
-    // Multi-stage path detection for wt.exe and claude.exe (LNCH-02, LNCH-03).
-    // Reads registry flags from HKCU\Software\ClaudeFromHere (LNCH-01).
-    // Shows actionable MessageBox on failure with install instructions (LNCH-04, LNCH-05).
-    // Launches: wt.exe -d "<pszPath>" -- cmd /k claude <flags>
-    // -----------------------------------------------------------------------
-
-    // FindExecutable: 3-stage detection (SearchPathW -> HKCU App Paths -> HKLM App Paths).
-    // Stage 4 (wt.exe execution alias) is handled in _LaunchClaude after this call.
-    static BOOL FindExecutable(PCWSTR exeName, PCWSTR appPathsSubkey, PWSTR szOut, DWORD cchOut)
+    // Resolve the target folder path. Path A: the right-clicked item (psiItemArray).
+    // Path B: folder-background click -> traverse the IObjectWithSite chain.
+    // Caller frees *outPath with CoTaskMemFree.
+    HRESULT ResolveFolderPath(IShellItemArray* psiItemArray, IUnknown* site, PWSTR* outPath)
     {
-        // Stage 1: SearchPathW (PATH, includes %LOCALAPPDATA%\Microsoft\WindowsApps)
-        if (SearchPathW(nullptr, exeName, nullptr, cchOut, szOut, nullptr))
-            return TRUE;
+        *outPath = nullptr;
+        HRESULT hr = E_FAIL;
 
-        // Stage 2: HKCU App Paths (wt.exe Store install registers here, not HKLM)
-        DWORD cb = cchOut * sizeof(WCHAR);
-        if (RegGetValueW(HKEY_CURRENT_USER, appPathsSubkey, nullptr,
-                RRF_RT_REG_SZ | RRF_ZEROONFAILURE, nullptr, szOut, &cb) == ERROR_SUCCESS
-            && szOut[0])
-            return TRUE;
+        if (psiItemArray)
+        {
+            IShellItem* psi = nullptr;
+            hr = psiItemArray->GetItemAt(0, &psi);
+            if (SUCCEEDED(hr) && psi)
+            {
+                hr = psi->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, outPath);
+                psi->Release();
+            }
+        }
 
-        // Stage 3: HKLM App Paths (winget / system-wide installs)
-        cb = cchOut * sizeof(WCHAR);
-        if (RegGetValueW(HKEY_LOCAL_MACHINE, appPathsSubkey, nullptr,
-                RRF_RT_REG_SZ | RRF_ZEROONFAILURE, nullptr, szOut, &cb) == ERROR_SUCCESS
-            && szOut[0])
-            return TRUE;
+        if (FAILED(hr) || !*outPath)
+            hr = GetFolderPathFromSite(site, outPath);
 
-        return FALSE;
+        return hr;
     }
 
-    void _LaunchClaude(PCWSTR pszPath)
+    // Launch wt.exe -d "<pszPath>" -- cmd /k claude <flags>.
+    // effortOverride: nullptr -> no --effort flag (Default; respects the user's global
+    // CLAUDE_CODE_EFFORT_LEVEL/settings.json). Non-null and whitelisted -> append
+    // --effort <token>. Reads registry flags from HKCU\Software\ClaudeFromHere.
+    void LaunchClaudeInDir(PCWSTR pszPath, PCWSTR effortOverride)
     {
         // --- Find wt.exe (3-stage + Stage 4 execution alias fallback) ---
         WCHAR szWt[MAX_PATH] = {};
@@ -389,6 +285,14 @@ private:
             StringCbCatW(szFlags, sizeof(szFlags), L" --model ");
             StringCbCatW(szFlags, sizeof(szFlags), szModel);
         }
+        // --effort ordered immediately after --model. Only emitted when an explicit
+        // level was chosen; the "Default" item passes nullptr -> no --effort, keeping
+        // the all-off command byte-identical to pre-feature output (D-13).
+        if (effortOverride && IsValidEffort(effortOverride))
+        {
+            StringCbCatW(szFlags, sizeof(szFlags), L" --effort ");
+            StringCbCatW(szFlags, sizeof(szFlags), effortOverride);
+        }
         if (dwVerbose)
         {
             StringCbCatW(szFlags, sizeof(szFlags), L" --verbose");
@@ -493,6 +397,339 @@ private:
             CloseHandle(pi.hThread);
         }
     }
+} // namespace
+
+// -------------------------------------------------------------------------
+// CClaudeMenuOption -- one flyout subitem (Default or a specific effort level)
+// -------------------------------------------------------------------------
+
+class CClaudeMenuOption : public IExplorerCommand, public IObjectWithSite
+{
+public:
+    CClaudeMenuOption(PCWSTR effort, PCWSTR title, bool separatorBefore, IUnknown* punkSite)
+        : _cRef(1), _effort(effort), _title(title), _separatorBefore(separatorBefore),
+          _punkSite(punkSite)
+    {
+        if (_punkSite) _punkSite->AddRef();
+        InterlockedIncrement(&g_cDllRef);
+    }
+
+    ~CClaudeMenuOption()
+    {
+        if (_punkSite) { _punkSite->Release(); _punkSite = nullptr; }
+        InterlockedDecrement(&g_cDllRef);
+    }
+
+    // IUnknown
+    IFACEMETHODIMP QueryInterface(REFIID riid, void** ppv) override
+    {
+        if (riid == IID_IUnknown || riid == IID_IExplorerCommand)
+            *ppv = static_cast<IExplorerCommand*>(this);
+        else if (riid == IID_IObjectWithSite)
+            *ppv = static_cast<IObjectWithSite*>(this);
+        else
+        {
+            *ppv = nullptr;
+            return E_NOINTERFACE;
+        }
+        AddRef();
+        return S_OK;
+    }
+
+    IFACEMETHODIMP_(ULONG) AddRef() override { return InterlockedIncrement(&_cRef); }
+
+    IFACEMETHODIMP_(ULONG) Release() override
+    {
+        ULONG cRef = InterlockedDecrement(&_cRef);
+        if (cRef == 0)
+            delete this;
+        return cRef;
+    }
+
+    // IExplorerCommand
+    IFACEMETHODIMP GetTitle(IShellItemArray*, LPWSTR* ppszName) override
+    {
+        return SHStrDupW(_title, ppszName);
+    }
+
+    IFACEMETHODIMP GetIcon(IShellItemArray*, LPWSTR* ppszIcon) override
+    {
+        *ppszIcon = nullptr;
+        return E_NOTIMPL;   // subitems carry no icon; the parent flyout shows claude.ico
+    }
+
+    IFACEMETHODIMP GetToolTip(IShellItemArray*, LPWSTR* ppszInfotip) override
+    {
+        *ppszInfotip = nullptr;
+        return E_NOTIMPL;
+    }
+
+    IFACEMETHODIMP GetCanonicalName(GUID* pguidCommandName) override
+    {
+        *pguidCommandName = CLSID_ClaudeFromHere;
+        return S_OK;
+    }
+
+    IFACEMETHODIMP GetState(IShellItemArray*, BOOL, EXPCMDSTATE* pCmdState) override
+    {
+        *pCmdState = ECS_ENABLED;
+        return S_OK;
+    }
+
+    IFACEMETHODIMP GetFlags(EXPCMDFLAGS* pFlags) override
+    {
+        // Leaf command. Draw a separator before it when requested (divides Default
+        // from the effort levels). ECF_DEFAULT is 0, so the separator flag stands alone.
+        *pFlags = _separatorBefore ? ECF_SEPARATORBEFORE : ECF_DEFAULT;
+        return S_OK;
+    }
+
+    IFACEMETHODIMP EnumSubCommands(IEnumExplorerCommand** ppEnum) override
+    {
+        *ppEnum = nullptr;
+        return E_NOTIMPL;   // leaf -- no nesting
+    }
+
+    IFACEMETHODIMP Invoke(IShellItemArray* psiItemArray, IBindCtx*) override
+    {
+        PWSTR pszPath = nullptr;
+        if (SUCCEEDED(ResolveFolderPath(psiItemArray, _punkSite, &pszPath)) && pszPath)
+        {
+            LaunchClaudeInDir(pszPath, _effort);   // _effort==nullptr for "Default"
+            CoTaskMemFree(pszPath);
+        }
+        return S_OK;
+    }
+
+    // IObjectWithSite -- the shell may set the site on subitems directly; if it does we
+    // honor it, otherwise we use the site propagated from the parent flyout.
+    IFACEMETHODIMP SetSite(IUnknown* punkSite) override
+    {
+        if (_punkSite) { _punkSite->Release(); _punkSite = nullptr; }
+        if (punkSite) { _punkSite = punkSite; _punkSite->AddRef(); }
+        return S_OK;
+    }
+
+    IFACEMETHODIMP GetSite(REFIID riid, void** ppvSite) override
+    {
+        if (!_punkSite) { *ppvSite = nullptr; return E_FAIL; }
+        return _punkSite->QueryInterface(riid, ppvSite);
+    }
+
+private:
+    long      _cRef;
+    PCWSTR    _effort;          // static literal from kMenuOptions, or nullptr for Default
+    PCWSTR    _title;           // static literal from kMenuOptions
+    bool      _separatorBefore;
+    IUnknown* _punkSite;
+};
+
+// -------------------------------------------------------------------------
+// CEnumMenuOptions -- IEnumExplorerCommand over the flyout subitems
+// -------------------------------------------------------------------------
+
+class CEnumMenuOptions : public IEnumExplorerCommand
+{
+public:
+    explicit CEnumMenuOptions(IUnknown* punkSite)
+        : _cRef(1), _index(0), _punkSite(punkSite)
+    {
+        if (_punkSite) _punkSite->AddRef();
+        InterlockedIncrement(&g_cDllRef);
+    }
+
+    ~CEnumMenuOptions()
+    {
+        if (_punkSite) { _punkSite->Release(); _punkSite = nullptr; }
+        InterlockedDecrement(&g_cDllRef);
+    }
+
+    // IUnknown
+    IFACEMETHODIMP QueryInterface(REFIID riid, void** ppv) override
+    {
+        if (riid == IID_IUnknown || riid == IID_IEnumExplorerCommand)
+        {
+            *ppv = static_cast<IEnumExplorerCommand*>(this);
+            AddRef();
+            return S_OK;
+        }
+        *ppv = nullptr;
+        return E_NOINTERFACE;
+    }
+
+    IFACEMETHODIMP_(ULONG) AddRef() override { return InterlockedIncrement(&_cRef); }
+
+    IFACEMETHODIMP_(ULONG) Release() override
+    {
+        ULONG cRef = InterlockedDecrement(&_cRef);
+        if (cRef == 0)
+            delete this;
+        return cRef;
+    }
+
+    // IEnumExplorerCommand
+    IFACEMETHODIMP Next(ULONG celt, IExplorerCommand** apUICommand, ULONG* pceltFetched) override
+    {
+        ULONG fetched = 0;
+        while (fetched < celt && _index < kMenuOptionCount)
+        {
+            const MenuOption& opt = kMenuOptions[_index];
+            IExplorerCommand* p = static_cast<IExplorerCommand*>(
+                new (std::nothrow) CClaudeMenuOption(opt.effort, opt.title, opt.separatorBefore, _punkSite));
+            if (!p)
+                break;
+            apUICommand[fetched++] = p;   // constructor set refcount = 1
+            _index++;
+        }
+        if (pceltFetched)
+            *pceltFetched = fetched;
+        return (fetched == celt) ? S_OK : S_FALSE;
+    }
+
+    IFACEMETHODIMP Skip(ULONG celt) override
+    {
+        _index += static_cast<int>(celt);
+        if (_index > kMenuOptionCount)
+            _index = kMenuOptionCount;
+        return S_OK;
+    }
+
+    IFACEMETHODIMP Reset() override
+    {
+        _index = 0;
+        return S_OK;
+    }
+
+    IFACEMETHODIMP Clone(IEnumExplorerCommand** ppenum) override
+    {
+        *ppenum = nullptr;
+        return E_NOTIMPL;   // not called by Explorer
+    }
+
+private:
+    long      _cRef;
+    int       _index;
+    IUnknown* _punkSite;
+};
+
+// -------------------------------------------------------------------------
+// CClaudeFromHere -- the single "Claude from here" flyout command
+// -------------------------------------------------------------------------
+
+class CClaudeFromHere : public IExplorerCommand, public IObjectWithSite
+{
+public:
+    CClaudeFromHere() : _cRef(1), _punkSite(nullptr)
+    {
+        InterlockedIncrement(&g_cDllRef);
+    }
+
+    ~CClaudeFromHere()
+    {
+        if (_punkSite)
+        {
+            _punkSite->Release();
+            _punkSite = nullptr;
+        }
+        InterlockedDecrement(&g_cDllRef);
+    }
+
+    // IUnknown
+    IFACEMETHODIMP QueryInterface(REFIID riid, void** ppv) override
+    {
+        if (riid == IID_IUnknown || riid == IID_IExplorerCommand)
+            *ppv = static_cast<IExplorerCommand*>(this);
+        else if (riid == IID_IObjectWithSite)
+            *ppv = static_cast<IObjectWithSite*>(this);
+        else
+        {
+            *ppv = nullptr;
+            return E_NOINTERFACE;
+        }
+        AddRef();
+        return S_OK;
+    }
+
+    IFACEMETHODIMP_(ULONG) AddRef() override { return InterlockedIncrement(&_cRef); }
+
+    IFACEMETHODIMP_(ULONG) Release() override
+    {
+        ULONG cRef = InterlockedDecrement(&_cRef);
+        if (cRef == 0)
+            delete this;
+        return cRef;
+    }
+
+    // IExplorerCommand
+    IFACEMETHODIMP GetTitle(IShellItemArray*, LPWSTR* ppszName) override
+    {
+        return SHStrDupW(L"Claude from here", ppszName);
+    }
+
+    IFACEMETHODIMP GetIcon(IShellItemArray*, LPWSTR* ppszIcon) override
+    {
+        return GetClaudeIconPath(ppszIcon);
+    }
+
+    IFACEMETHODIMP GetToolTip(IShellItemArray*, LPWSTR* ppszInfotip) override
+    {
+        return SHStrDupW(L"Open Claude Code in this directory", ppszInfotip);
+    }
+
+    IFACEMETHODIMP GetCanonicalName(GUID* pguidCommandName) override
+    {
+        *pguidCommandName = CLSID_ClaudeFromHere;
+        return S_OK;
+    }
+
+    IFACEMETHODIMP GetState(IShellItemArray*, BOOL, EXPCMDSTATE* pCmdState) override
+    {
+        *pCmdState = ECS_ENABLED;
+        return S_OK;
+    }
+
+    IFACEMETHODIMP GetFlags(EXPCMDFLAGS* pFlags) override
+    {
+        *pFlags = ECF_HASSUBCOMMANDS;   // present as a flyout (Default + effort levels)
+        return S_OK;
+    }
+
+    IFACEMETHODIMP EnumSubCommands(IEnumExplorerCommand** ppEnum) override
+    {
+        *ppEnum = nullptr;
+        // Propagate our site into the enumerator -> each subitem, so the
+        // folder-background case resolves a path even if the shell never calls
+        // SetSite on the subitems directly.
+        CEnumMenuOptions* pEnum = new (std::nothrow) CEnumMenuOptions(_punkSite);
+        if (!pEnum)
+            return E_OUTOFMEMORY;
+        *ppEnum = pEnum;   // constructor set refcount = 1
+        return S_OK;
+    }
+
+    IFACEMETHODIMP Invoke(IShellItemArray*, IBindCtx*) override
+    {
+        // A flyout parent is not invoked directly; selecting it opens the submenu.
+        return S_OK;
+    }
+
+    // IObjectWithSite
+    IFACEMETHODIMP SetSite(IUnknown* punkSite) override
+    {
+        if (_punkSite) { _punkSite->Release(); _punkSite = nullptr; }
+        if (punkSite) { _punkSite = punkSite; _punkSite->AddRef(); }
+        return S_OK;
+    }
+
+    IFACEMETHODIMP GetSite(REFIID riid, void** ppvSite) override
+    {
+        if (!_punkSite) { *ppvSite = nullptr; return E_FAIL; }
+        return _punkSite->QueryInterface(riid, ppvSite);
+    }
+
+private:
+    long      _cRef;
+    IUnknown* _punkSite;
 };
 
 // -------------------------------------------------------------------------

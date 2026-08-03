@@ -57,7 +57,10 @@
 
       <Extensions>
 
-        <!-- Register the COM surrogate server (the DLL) -->
+        <!-- Register the COM surrogate server (the DLL). One CLSID: the single
+             "Claude from here" command presents as a flyout at runtime via
+             EnumSubCommands (Default + effort levels) — no second verb, so Windows
+             does not group it under the package name. -->
         <com:Extension Category="windows.comServer">
           <com:ComServer>
             <com:SurrogateServer DisplayName="ClaudeFromHere">
