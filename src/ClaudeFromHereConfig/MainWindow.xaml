@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Claude From Here &#x2014; Settings"
         MinWidth="500" MinHeight="480"
-        Width="520" Height="560"
+        Width="520" Height="700"
         ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen"
         Icon="pack://siteoforigin:,,,/settings.ico"
@@ -199,6 +199,10 @@
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
                             <Label Grid.Row="0" Grid.Column="0" Content="Preset:"
@@ -227,14 +231,20 @@
                             <TextBox x:Name="providerModelTextBox" Grid.Row="3" Grid.Column="1"
                                      Margin="0,0,0,8"/>
 
-                            <Label Grid.Row="4" Grid.Column="0" Content="API key:"
+                            <Label Grid.Row="4" Grid.Column="0" Content="Small model:"
                                    VerticalAlignment="Center"/>
-                            <PasswordBox x:Name="providerKeyBox" Grid.Row="4" Grid.Column="1"
+                            <TextBox x:Name="providerSmallModelTextBox" Grid.Row="4" Grid.Column="1"
+                                     Margin="0,0,0,8"
+                                     ToolTip="Model for background/small-fast tasks. Empty = same as Model."/>
+
+                            <Label Grid.Row="5" Grid.Column="0" Content="API key:"
+                                   VerticalAlignment="Center"/>
+                            <PasswordBox x:Name="providerKeyBox" Grid.Row="5" Grid.Column="1"
                                          Margin="0,0,0,8"/>
 
-                            <Label Grid.Row="5" Grid.Column="0" Content="Effort:"
+                            <Label Grid.Row="6" Grid.Column="0" Content="Effort:"
                                    VerticalAlignment="Center"/>
-                            <ComboBox x:Name="providerEffortComboBox" Grid.Row="5" Grid.Column="1"
+                            <ComboBox x:Name="providerEffortComboBox" Grid.Row="6" Grid.Column="1"
                                       Margin="0,0,0,8">
                                 <ComboBoxItem Content="(default)" IsSelected="True"/>
                                 <ComboBoxItem Content="low"/>
@@ -244,7 +254,35 @@
                                 <ComboBoxItem Content="max"/>
                             </ComboBox>
 
-                            <Button Grid.Row="6" Grid.Column="1" Content="Add Provider"
+                            <Label Grid.Row="7" Grid.Column="0" Content="Tab color:"
+                                   VerticalAlignment="Center"/>
+                            <ComboBox x:Name="providerTabColorComboBox" Grid.Row="7" Grid.Column="1"
+                                      IsEditable="True" Margin="0,0,0,8"
+                                      ToolTip="Windows Terminal tab color for this profile (#RRGGBB). Empty = default.">
+                                <ComboBoxItem Content=""/>
+                                <ComboBoxItem Content="#E36209"/>
+                                <ComboBoxItem Content="#2EA043"/>
+                                <ComboBoxItem Content="#388BFD"/>
+                                <ComboBoxItem Content="#A371F7"/>
+                                <ComboBoxItem Content="#DA3633"/>
+                            </ComboBox>
+
+                            <Label Grid.Row="8" Grid.Column="0" Content="Extra flags:"
+                                   VerticalAlignment="Center"/>
+                            <TextBox x:Name="providerExtraFlagsTextBox" Grid.Row="8" Grid.Column="1"
+                                     Margin="0,0,0,8"
+                                     ToolTip="Appended after the global flags for this profile's launches."/>
+
+                            <StackPanel Grid.Row="9" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,8">
+                                <CheckBox x:Name="providerContinueCheckBox" Content="-c" Margin="0,0,16,0"
+                                          ToolTip="Continue the most recent conversation"/>
+                                <CheckBox x:Name="providerResumeCheckBox" Content="-r" Margin="0,0,16,0"
+                                          ToolTip="Resume a specific conversation"/>
+                                <CheckBox x:Name="providerVerboseCheckBox" Content="--verbose"
+                                          ToolTip="Enable verbose mode"/>
+                            </StackPanel>
+
+                            <Button Grid.Row="10" Grid.Column="1" Content="Add Provider"
                                     Style="{StaticResource AccentButton}"
                                     Click="AddProvider_Click"
                                     HorizontalAlignment="Right" Width="110" Margin="0,0,0,8"/>
@@ -263,6 +301,14 @@
                                             DataContext="{Binding}"
                                             Click="RemoveProvider_Click"
                                             Width="60" Margin="4,0,0,0"/>
+                                    <Button DockPanel.Dock="Right" Content="&#x25BC;"
+                                            DataContext="{Binding}"
+                                            Click="MoveProviderDown_Click"
+                                            Width="24" Margin="4,0,0,0" ToolTip="Move down"/>
+                                    <Button DockPanel.Dock="Right" Content="&#x25B2;"
+                                            DataContext="{Binding}"
+                                            Click="MoveProviderUp_Click"
+                                            Width="24" Margin="4,0,0,0" ToolTip="Move up"/>
                                     <TextBlock Text="{Binding Display}" FontFamily="Consolas" FontSize="12"
                                                VerticalAlignment="Center"/>
                                 </DockPanel>

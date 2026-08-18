@@ -37,7 +37,13 @@ namespace ClaudeFromHereConfig
             public string Name { get; set; } = "";
             public string BaseUrl { get; set; } = "";
             public string Model { get; set; } = "";
+            public string SmallFastModel { get; set; } = "";
             public string Effort { get; set; } = "";
+            public string TabColor { get; set; } = "";
+            public string ExtraFlags { get; set; } = "";
+            public bool Continue { get; set; }
+            public bool Resume { get; set; }
+            public bool Verbose { get; set; }
             public byte[]? TokenBlob { get; set; } // DPAPI blob; null = no key
             public string Display =>
                 $"{Name} — {BaseUrl}" +
@@ -127,7 +133,13 @@ namespace ClaudeFromHereConfig
                     Name = sub.GetValue("Name", "") as string ?? "",
                     BaseUrl = sub.GetValue("BaseUrl", "") as string ?? "",
                     Model = sub.GetValue("Model", "") as string ?? "",
+                    SmallFastModel = sub.GetValue("SmallFastModel", "") as string ?? "",
                     Effort = sub.GetValue("Effort", "") as string ?? "",
+                    TabColor = sub.GetValue("TabColor", "") as string ?? "",
+                    ExtraFlags = sub.GetValue("ExtraFlags", "") as string ?? "",
+                    Continue = ((int)(sub.GetValue("Continue", 0) ?? 0)) != 0,
+                    Resume = ((int)(sub.GetValue("Resume", 0) ?? 0)) != 0,
+                    Verbose = ((int)(sub.GetValue("Verbose", 0) ?? 0)) != 0,
                     TokenBlob = sub.GetValue("AuthToken", null) as byte[],
                 };
                 if (entry.Name.Length > 0 || entry.BaseUrl.Length > 0)
@@ -181,6 +193,9 @@ namespace ClaudeFromHereConfig
             var name = providerNameTextBox.Text?.Trim() ?? "";
             var baseUrl = providerBaseUrlTextBox.Text?.Trim() ?? "";
             var model = providerModelTextBox.Text?.Trim() ?? "";
+            var smallModel = providerSmallModelTextBox.Text?.Trim() ?? "";
+            var tabColor = providerTabColorComboBox.Text?.Trim() ?? "";
+            var profileFlags = providerExtraFlagsTextBox.Text?.Trim() ?? "";
             var apiKey = providerKeyBox.Password ?? "";
 
             if (name.Length == 0 || baseUrl.Length == 0)
@@ -190,8 +205,17 @@ namespace ClaudeFromHereConfig
                 return;
             }
 
+            if (tabColor.Length > 0 &&
+                !System.Text.RegularExpressions.Regex.IsMatch(tabColor, "^#[0-9A-Fa-f]{6}$"))
+            {
+                MessageBox.Show("Tab color must be a #RRGGBB hex value (e.g. #E36209).",
+                    "Claude From Here", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             var badField = FirstUnsafeField(("Name", name), ("Base URL", baseUrl),
-                ("Model", model), ("API key", apiKey));
+                ("Model", model), ("Small model", smallModel),
+                ("Extra flags", profileFlags), ("API key", apiKey));
             if (badField != null)
             {
                 MessageBox.Show(
@@ -210,7 +234,14 @@ namespace ClaudeFromHereConfig
             var effort = (providerEffortComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content?.ToString() ?? "";
             if (effort == "(default)") effort = "";
 
-            var entry = new ProviderEntry { Name = name, BaseUrl = baseUrl, Model = model, Effort = effort };
+            var entry = new ProviderEntry
+            {
+                Name = name, BaseUrl = baseUrl, Model = model, SmallFastModel = smallModel,
+                Effort = effort, TabColor = tabColor, ExtraFlags = profileFlags,
+                Continue = providerContinueCheckBox.IsChecked == true,
+                Resume = providerResumeCheckBox.IsChecked == true,
+                Verbose = providerVerboseCheckBox.IsChecked == true,
+            };
             if (apiKey.Length > 0)
             {
                 entry.TokenBlob = System.Security.Cryptography.ProtectedData.Protect(
@@ -223,6 +254,12 @@ namespace ClaudeFromHereConfig
             providerNameTextBox.Text = "";
             providerBaseUrlTextBox.Text = "";
             providerModelTextBox.Text = "";
+            providerSmallModelTextBox.Text = "";
+            providerTabColorComboBox.Text = "";
+            providerExtraFlagsTextBox.Text = "";
+            providerContinueCheckBox.IsChecked = false;
+            providerResumeCheckBox.IsChecked = false;
+            providerVerboseCheckBox.IsChecked = false;
             providerKeyBox.Clear();
             providerEffortComboBox.SelectedIndex = 0;
             providerPresetComboBox.SelectedIndex = 0;
@@ -233,6 +270,20 @@ namespace ClaudeFromHereConfig
             var btn = (System.Windows.Controls.Button)sender;
             var entry = (ProviderEntry)btn.DataContext;
             _providers.Remove(entry);
+        }
+
+        private void MoveProviderUp_Click(object sender, RoutedEventArgs e)
+        {
+            var entry = (ProviderEntry)((System.Windows.Controls.Button)sender).DataContext;
+            int i = _providers.IndexOf(entry);
+            if (i > 0) _providers.Move(i, i - 1);
+        }
+
+        private void MoveProviderDown_Click(object sender, RoutedEventArgs e)
+        {
+            var entry = (ProviderEntry)((System.Windows.Controls.Button)sender).DataContext;
+            int i = _providers.IndexOf(entry);
+            if (i >= 0 && i < _providers.Count - 1) _providers.Move(i, i + 1);
         }
 
         private void SaveProviders()
@@ -250,7 +301,13 @@ namespace ClaudeFromHereConfig
                 sub.SetValue("Name", _providers[i].Name, RegistryValueKind.String);
                 sub.SetValue("BaseUrl", _providers[i].BaseUrl, RegistryValueKind.String);
                 sub.SetValue("Model", _providers[i].Model, RegistryValueKind.String);
+                sub.SetValue("SmallFastModel", _providers[i].SmallFastModel, RegistryValueKind.String);
                 sub.SetValue("Effort", _providers[i].Effort, RegistryValueKind.String);
+                sub.SetValue("TabColor", _providers[i].TabColor, RegistryValueKind.String);
+                sub.SetValue("ExtraFlags", _providers[i].ExtraFlags, RegistryValueKind.String);
+                sub.SetValue("Continue", _providers[i].Continue ? 1 : 0, RegistryValueKind.DWord);
+                sub.SetValue("Resume", _providers[i].Resume ? 1 : 0, RegistryValueKind.DWord);
+                sub.SetValue("Verbose", _providers[i].Verbose ? 1 : 0, RegistryValueKind.DWord);
                 if (_providers[i].TokenBlob != null)
                     sub.SetValue("AuthToken", _providers[i].TokenBlob!, RegistryValueKind.Binary);
             }

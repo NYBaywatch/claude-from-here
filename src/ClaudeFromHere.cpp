@@ -39,11 +39,26 @@ struct ProviderProfile
     WCHAR name[128];
     WCHAR baseUrl[512];
     WCHAR model[128];
+    WCHAR smallModel[128]; // ANTHROPIC_SMALL_FAST_MODEL; falls back to model
     WCHAR subkey[64];  // registry subkey name; the launch script decrypts the
                        // DPAPI AuthToken from it in-terminal, so the secret
                        // never appears on a process command line
     WCHAR effort[16];  // "", or a whitelisted --effort token
+    WCHAR tabColor[16];     // "#RRGGBB" for wt --tabColor, or ""
+    WCHAR extraFlags[1024]; // appended after the global flags
+    DWORD dwContinue;
+    DWORD dwResume;
+    DWORD dwVerbose;
 };
+
+// wt.exe --tabColor input goes onto a command line; accept strictly #RRGGBB.
+static bool IsValidTabColor(PCWSTR c)
+{
+    if (!c || c[0] != L'#' || wcslen(c) != 7) return false;
+    for (int i = 1; i < 7; i++)
+        if (!iswxdigit(c[i])) return false;
+    return true;
+}
 
 // Defense-in-depth (from PR #4, credit Hugo Karlsson): validate an effort token
 // against the whitelist before it ever reaches the command line. The config app
@@ -108,6 +123,30 @@ static int LoadProviders(ProviderProfile* profiles, int maxProfiles)
         cb = sizeof(p.effort);
         RegGetValueW(hSub, nullptr, L"Effort",
             RRF_RT_REG_SZ | RRF_ZEROONFAILURE, nullptr, p.effort, &cb);
+
+        cb = sizeof(p.smallModel);
+        RegGetValueW(hSub, nullptr, L"SmallFastModel",
+            RRF_RT_REG_SZ | RRF_ZEROONFAILURE, nullptr, p.smallModel, &cb);
+
+        cb = sizeof(p.tabColor);
+        RegGetValueW(hSub, nullptr, L"TabColor",
+            RRF_RT_REG_SZ | RRF_ZEROONFAILURE, nullptr, p.tabColor, &cb);
+
+        cb = sizeof(p.extraFlags);
+        RegGetValueW(hSub, nullptr, L"ExtraFlags",
+            RRF_RT_REG_SZ | RRF_ZEROONFAILURE, nullptr, p.extraFlags, &cb);
+
+        cb = sizeof(p.dwContinue);
+        RegGetValueW(hSub, nullptr, L"Continue",
+            RRF_RT_REG_DWORD | RRF_ZEROONFAILURE, nullptr, &p.dwContinue, &cb);
+
+        cb = sizeof(p.dwResume);
+        RegGetValueW(hSub, nullptr, L"Resume",
+            RRF_RT_REG_DWORD | RRF_ZEROONFAILURE, nullptr, &p.dwResume, &cb);
+
+        cb = sizeof(p.dwVerbose);
+        RegGetValueW(hSub, nullptr, L"Verbose",
+            RRF_RT_REG_DWORD | RRF_ZEROONFAILURE, nullptr, &p.dwVerbose, &cb);
 
         StringCbCopyW(p.subkey, sizeof(p.subkey), szSubkey);
 
@@ -390,6 +429,37 @@ static void LaunchClaude(PCWSTR pszPath, const ProviderProfile* pProvider)
         StringCbCatW(szFlags, sizeof(szFlags), szExtraFlags);
     }
 
+    // --- Per-profile flag additions (stack on top of the global flags) ---
+    if (pProvider)
+    {
+        if (pProvider->dwContinue && !dwContinue)
+            StringCbCatW(szFlags, sizeof(szFlags), L" -c");
+        if (pProvider->dwResume && !dwResume)
+            StringCbCatW(szFlags, sizeof(szFlags), L" -r");
+        if (pProvider->dwVerbose && !dwVerbose)
+            StringCbCatW(szFlags, sizeof(szFlags), L" --verbose");
+        if (pProvider->extraFlags[0])
+        {
+            StringCbCatW(szFlags, sizeof(szFlags), L" ");
+            StringCbCatW(szFlags, sizeof(szFlags), pProvider->extraFlags);
+        }
+    }
+
+    // --- Windows Terminal tab options (title = profile name, optional color) ---
+    WCHAR szWtOpts[256] = {};
+    if (pProvider && pProvider->name[0])
+    {
+        StringCbCatW(szWtOpts, sizeof(szWtOpts), L" --title \"");
+        StringCbCatW(szWtOpts, sizeof(szWtOpts), pProvider->name);
+        StringCbCatW(szWtOpts, sizeof(szWtOpts), L"\"");
+    }
+    if (pProvider && IsValidTabColor(pProvider->tabColor))
+    {
+        StringCbCatW(szWtOpts, sizeof(szWtOpts), L" --tabColor \"");
+        StringCbCatW(szWtOpts, sizeof(szWtOpts), pProvider->tabColor);
+        StringCbCatW(szWtOpts, sizeof(szWtOpts), L"\"");
+    }
+
     // --- Build command line ---
     // Ensure drive-root paths like "D:" get a trailing backslash ("D:\")
     // because wt.exe rejects bare drive letters as -d arguments.
@@ -421,10 +491,16 @@ static void LaunchClaude(PCWSTR pszPath, const ProviderProfile* pProvider)
         {
             StringCbCatW(szScript, sizeof(szScript), L"$env:ANTHROPIC_MODEL=");
             AppendPsQuoted(szScript, sizeof(szScript), pProvider->model);
-            // Background/haiku calls must not hit the third-party endpoint with an
-            // Anthropic model name it doesn't serve.
-            StringCbCatW(szScript, sizeof(szScript), L";$env:ANTHROPIC_SMALL_FAST_MODEL=");
-            AppendPsQuoted(szScript, sizeof(szScript), pProvider->model);
+            StringCbCatW(szScript, sizeof(szScript), L";");
+        }
+        // Background/haiku calls must not hit the third-party endpoint with an
+        // Anthropic model name it doesn't serve; a dedicated small/fast model
+        // wins, otherwise mirror the main model.
+        PCWSTR smallModel = pProvider->smallModel[0] ? pProvider->smallModel : pProvider->model;
+        if (smallModel[0])
+        {
+            StringCbCatW(szScript, sizeof(szScript), L"$env:ANTHROPIC_SMALL_FAST_MODEL=");
+            AppendPsQuoted(szScript, sizeof(szScript), smallModel);
             StringCbCatW(szScript, sizeof(szScript), L";");
         }
         if (pProvider->subkey[0])
@@ -457,13 +533,13 @@ static void LaunchClaude(PCWSTR pszPath, const ProviderProfile* pProvider)
             return;
 
         hr = StringCbPrintfW(szCmdLine, sizeof(szCmdLine),
-            L"wt.exe -d \"%s\" -- powershell -NoLogo -NoExit -EncodedCommand %s",
-            szPath, szEncoded);
+            L"wt.exe -d \"%s\"%s -- powershell -NoLogo -NoExit -EncodedCommand %s",
+            szPath, szWtOpts, szEncoded);
     }
     else
     {
         hr = StringCbPrintfW(szCmdLine, sizeof(szCmdLine),
-            L"wt.exe -d \"%s\" -- cmd /k claude%s", szPath, szFlags);
+            L"wt.exe -d \"%s\"%s -- cmd /k claude%s", szPath, szWtOpts, szFlags);
     }
     if (FAILED(hr))
         return;
