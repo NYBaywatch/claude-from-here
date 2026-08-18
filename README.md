@@ -30,6 +30,7 @@ Requires Windows 11.
 - **Auto-detects paths** — finds Windows Terminal and Claude Code wherever they're installed
 - **Custom icon** — Claude icon appears next to the menu item
 - **Settings app** — configure CLI flags (--model, --verbose, --allowedTools) via Start Menu shortcut
+- **Model routing** — add provider profiles (Kimi K2, Qwen, a local Anthropic-compatible proxy) and the menu becomes a flyout so you pick per-launch which backend Claude Code talks to
 - **Per-user install** — no admin required, no elevation prompt
 - **Clean uninstall** — removes all registry entries, MSIX registration, and files
 
@@ -42,6 +43,16 @@ Requires Windows 11.
 ### Settings
 
 Find **Claude From Here Settings** in the Start Menu to configure how Claude Code is launched — set a default model, enable verbose output, restrict tools, or pass any other CLI flags.
+
+### Routing to other models
+
+On the **Providers** tab of the Settings app, add profiles for alternative backends — presets are included for OpenRouter (Kimi K3, or any of its hundreds of models), Kimi K2 (Moonshot direct), Qwen (DashScope), and a local proxy such as [claude-code-router](https://github.com/musistudio/claude-code-router). OpenRouter speaks the Anthropic protocol natively at `https://openrouter.ai/api`, so no local proxy is needed. Each profile is a name, an Anthropic-compatible base URL, a model name, and an optional API key (stored DPAPI-encrypted, per-user).
+
+Once at least one provider exists, **Claude from here** becomes a flyout: *Claude (default)* plus one entry per provider. Picking a provider launches Claude Code with `ANTHROPIC_BASE_URL`, `ANTHROPIC_AUTH_TOKEN`, and `ANTHROPIC_MODEL` pointed at that backend for that session only. Local servers must expose the Anthropic Messages API (directly or via a proxy like claude-code-router or LiteLLM); leave the API key empty if the server doesn't need one.
+
+### Effort levels
+
+Each provider profile can also pin a reasoning effort (`--effort low/medium/high/xhigh/max`) for its launches. Or tick **Show effort levels** on the Providers tab to add the five standard effort entries (*Low effort* → *Max effort*) to the flyout without creating profiles — those launch the default backend at that effort for that session only. Effort-level launching was contributed by [Hugo Karlsson](https://github.com/HuggeK) (#4).
 
 ## Troubleshooting
 

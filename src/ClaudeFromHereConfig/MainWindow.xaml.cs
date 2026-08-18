@@ -27,7 +27,24 @@ namespace ClaudeFromHereConfig
             DwmSetWindowAttribute(hwnd, 36, ref textColor, sizeof(int)); // DWMWA_TEXT_COLOR
         }
         private const string RegistryPath = @"Software\ClaudeFromHere";
+        private const string ProvidersPath = RegistryPath + @"\Providers";
+        private const int MaxProviders = 8;
         private ObservableCollection<string> _channels = new ObservableCollection<string>();
+        private ObservableCollection<ProviderEntry> _providers = new ObservableCollection<ProviderEntry>();
+
+        public class ProviderEntry
+        {
+            public string Name { get; set; } = "";
+            public string BaseUrl { get; set; } = "";
+            public string Model { get; set; } = "";
+            public string Effort { get; set; } = "";
+            public byte[]? TokenBlob { get; set; } // DPAPI blob; null = no key
+            public string Display =>
+                $"{Name} — {BaseUrl}" +
+                (string.IsNullOrEmpty(Model) ? "" : $" ({Model})") +
+                (string.IsNullOrEmpty(Effort) ? "" : $" [{Effort}]") +
+                (TokenBlob == null ? "" : "  \U0001F511");
+        }
 
         private static readonly Dictionary<string, string> _presetMap = new()
         {
@@ -40,6 +57,7 @@ namespace ClaudeFromHereConfig
             InitializeComponent();
             SourceInitialized += (_, _) => EnableDarkTitleBar();
             ChannelListBox.ItemsSource = _channels;
+            ProviderListBox.ItemsSource = _providers;
             LoadSettings();
             DetectPaths();
         }
@@ -76,11 +94,160 @@ namespace ClaudeFromHereConfig
                 dangerSkipCheckBox.IsChecked = ((int)(key.GetValue("DangerouslySkipPermissions", 0) ?? 0)) != 0;
                 allowDangerSkipCheckBox.IsChecked = ((int)(key.GetValue("AllowDangerouslySkipPermissions", 0) ?? 0)) != 0;
                 remotePrefixTextBox.Text = key.GetValue("RemoteControlPrefix", "") as string ?? "";
+                showEffortLevelsCheckBox.IsChecked = ((int)(key.GetValue("ShowEffortLevels", 0) ?? 0)) != 0;
 
                 var channelsRaw = key.GetValue("Channels", "") as string ?? "";
                 _channels.Clear();
                 foreach (var ch in channelsRaw.Split('|'))
                     if (!string.IsNullOrWhiteSpace(ch)) _channels.Add(ch.Trim());
+            }
+
+            LoadProviders();
+        }
+
+        private void LoadProviders()
+        {
+            _providers.Clear();
+            using var root = Registry.CurrentUser.OpenSubKey(ProvidersPath);
+            if (root == null) return;
+
+            foreach (var subName in root.GetSubKeyNames())
+            {
+                if (_providers.Count >= MaxProviders) break;
+                using var sub = root.OpenSubKey(subName);
+                if (sub == null) continue;
+
+                var entry = new ProviderEntry
+                {
+                    Name = sub.GetValue("Name", "") as string ?? "",
+                    BaseUrl = sub.GetValue("BaseUrl", "") as string ?? "",
+                    Model = sub.GetValue("Model", "") as string ?? "",
+                    Effort = sub.GetValue("Effort", "") as string ?? "",
+                    TokenBlob = sub.GetValue("AuthToken", null) as byte[],
+                };
+                if (entry.Name.Length > 0 || entry.BaseUrl.Length > 0)
+                    _providers.Add(entry);
+            }
+        }
+
+        // Characters that would break the cmd `set "VAR=value"` chain the shell
+        // extension builds at launch.
+        private static readonly char[] _cmdUnsafeChars = { '"', '&', '|', '<', '>', '^', '%', ';' };
+
+        private static string? FirstUnsafeField(params (string label, string value)[] fields)
+        {
+            foreach (var (label, value) in fields)
+                if (value.IndexOfAny(_cmdUnsafeChars) >= 0)
+                    return label;
+            return null;
+        }
+
+        private void ProviderPreset_Changed(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            if (providerNameTextBox == null) return; // fires during InitializeComponent
+            var preset = (providerPresetComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content?.ToString();
+            switch (preset)
+            {
+                case "OpenRouter (Kimi K3)":
+                    providerNameTextBox.Text = "Kimi K3 (OpenRouter)";
+                    providerBaseUrlTextBox.Text = "https://openrouter.ai/api";
+                    providerModelTextBox.Text = "moonshotai/kimi-k3";
+                    break;
+                case "Kimi K2 (Moonshot)":
+                    providerNameTextBox.Text = "Kimi K2";
+                    providerBaseUrlTextBox.Text = "https://api.moonshot.ai/anthropic";
+                    providerModelTextBox.Text = "kimi-k2-0905-preview";
+                    break;
+                case "Qwen (DashScope)":
+                    providerNameTextBox.Text = "Qwen";
+                    providerBaseUrlTextBox.Text = "https://dashscope-intl.aliyuncs.com/api/v2/apps/claude-code-proxy";
+                    providerModelTextBox.Text = "qwen3-coder-plus";
+                    break;
+                case "Local proxy (claude-code-router)":
+                    providerNameTextBox.Text = "Local";
+                    providerBaseUrlTextBox.Text = "http://127.0.0.1:3456";
+                    providerModelTextBox.Text = "";
+                    break;
+            }
+        }
+
+        private void AddProvider_Click(object sender, RoutedEventArgs e)
+        {
+            var name = providerNameTextBox.Text?.Trim() ?? "";
+            var baseUrl = providerBaseUrlTextBox.Text?.Trim() ?? "";
+            var model = providerModelTextBox.Text?.Trim() ?? "";
+            var apiKey = providerKeyBox.Password ?? "";
+
+            if (name.Length == 0 || baseUrl.Length == 0)
+            {
+                MessageBox.Show("Provider needs at least a name and a base URL.",
+                    "Claude From Here", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var badField = FirstUnsafeField(("Name", name), ("Base URL", baseUrl),
+                ("Model", model), ("API key", apiKey));
+            if (badField != null)
+            {
+                MessageBox.Show(
+                    $"The {badField} field contains a character (\" & | < > ^ % ;) that would break the launch command.",
+                    "Claude From Here", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (_providers.Count >= MaxProviders)
+            {
+                MessageBox.Show($"At most {MaxProviders} providers are supported.",
+                    "Claude From Here", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var effort = (providerEffortComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content?.ToString() ?? "";
+            if (effort == "(default)") effort = "";
+
+            var entry = new ProviderEntry { Name = name, BaseUrl = baseUrl, Model = model, Effort = effort };
+            if (apiKey.Length > 0)
+            {
+                entry.TokenBlob = System.Security.Cryptography.ProtectedData.Protect(
+                    System.Text.Encoding.Unicode.GetBytes(apiKey),
+                    null,
+                    System.Security.Cryptography.DataProtectionScope.CurrentUser);
+            }
+            _providers.Add(entry);
+
+            providerNameTextBox.Text = "";
+            providerBaseUrlTextBox.Text = "";
+            providerModelTextBox.Text = "";
+            providerKeyBox.Clear();
+            providerEffortComboBox.SelectedIndex = 0;
+            providerPresetComboBox.SelectedIndex = 0;
+        }
+
+        private void RemoveProvider_Click(object sender, RoutedEventArgs e)
+        {
+            var btn = (System.Windows.Controls.Button)sender;
+            var entry = (ProviderEntry)btn.DataContext;
+            _providers.Remove(entry);
+        }
+
+        private void SaveProviders()
+        {
+            // Rewrite the whole Providers subtree from the in-memory list.
+            using (var root = Registry.CurrentUser.CreateSubKey(RegistryPath))
+                root.DeleteSubKeyTree("Providers", throwOnMissingSubKey: false);
+
+            if (_providers.Count == 0) return;
+
+            using var providersKey = Registry.CurrentUser.CreateSubKey(ProvidersPath);
+            for (int i = 0; i < _providers.Count; i++)
+            {
+                using var sub = providersKey.CreateSubKey(i.ToString());
+                sub.SetValue("Name", _providers[i].Name, RegistryValueKind.String);
+                sub.SetValue("BaseUrl", _providers[i].BaseUrl, RegistryValueKind.String);
+                sub.SetValue("Model", _providers[i].Model, RegistryValueKind.String);
+                sub.SetValue("Effort", _providers[i].Effort, RegistryValueKind.String);
+                if (_providers[i].TokenBlob != null)
+                    sub.SetValue("AuthToken", _providers[i].TokenBlob!, RegistryValueKind.Binary);
             }
         }
 
@@ -126,7 +293,10 @@ namespace ClaudeFromHereConfig
                 key.SetValue("AllowDangerouslySkipPermissions", allowDangerSkipCheckBox.IsChecked == true ? 1 : 0, RegistryValueKind.DWord);
                 key.SetValue("RemoteControlPrefix", remotePrefixTextBox.Text ?? "", RegistryValueKind.String);
                 key.SetValue("Channels", string.Join("|", _channels), RegistryValueKind.String);
+                key.SetValue("ShowEffortLevels", showEffortLevelsCheckBox.IsChecked == true ? 1 : 0, RegistryValueKind.DWord);
             }
+
+            SaveProviders();
 
             this.Close();
         }

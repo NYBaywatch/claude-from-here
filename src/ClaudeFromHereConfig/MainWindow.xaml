@@ -181,6 +181,100 @@
                 </StackPanel>
             </TabItem>
 
+            <!-- Providers tab -->
+            <TabItem Header="Providers">
+                <DockPanel Margin="16">
+                    <!-- Add provider form -->
+                    <StackPanel DockPanel.Dock="Top">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <Label Grid.Row="0" Grid.Column="0" Content="Preset:"
+                                   VerticalAlignment="Center"/>
+                            <ComboBox x:Name="providerPresetComboBox" Grid.Row="0" Grid.Column="1"
+                                      Margin="0,0,0,8" SelectionChanged="ProviderPreset_Changed">
+                                <ComboBoxItem Content="(custom)" IsSelected="True"/>
+                                <ComboBoxItem Content="OpenRouter (Kimi K3)"/>
+                                <ComboBoxItem Content="Kimi K2 (Moonshot)"/>
+                                <ComboBoxItem Content="Qwen (DashScope)"/>
+                                <ComboBoxItem Content="Local proxy (claude-code-router)"/>
+                            </ComboBox>
+
+                            <Label Grid.Row="1" Grid.Column="0" Content="Name:"
+                                   VerticalAlignment="Center"/>
+                            <TextBox x:Name="providerNameTextBox" Grid.Row="1" Grid.Column="1"
+                                     Margin="0,0,0,8"/>
+
+                            <Label Grid.Row="2" Grid.Column="0" Content="Base URL:"
+                                   VerticalAlignment="Center"/>
+                            <TextBox x:Name="providerBaseUrlTextBox" Grid.Row="2" Grid.Column="1"
+                                     Margin="0,0,0,8"/>
+
+                            <Label Grid.Row="3" Grid.Column="0" Content="Model:"
+                                   VerticalAlignment="Center"/>
+                            <TextBox x:Name="providerModelTextBox" Grid.Row="3" Grid.Column="1"
+                                     Margin="0,0,0,8"/>
+
+                            <Label Grid.Row="4" Grid.Column="0" Content="API key:"
+                                   VerticalAlignment="Center"/>
+                            <PasswordBox x:Name="providerKeyBox" Grid.Row="4" Grid.Column="1"
+                                         Margin="0,0,0,8"/>
+
+                            <Label Grid.Row="5" Grid.Column="0" Content="Effort:"
+                                   VerticalAlignment="Center"/>
+                            <ComboBox x:Name="providerEffortComboBox" Grid.Row="5" Grid.Column="1"
+                                      Margin="0,0,0,8">
+                                <ComboBoxItem Content="(default)" IsSelected="True"/>
+                                <ComboBoxItem Content="low"/>
+                                <ComboBoxItem Content="medium"/>
+                                <ComboBoxItem Content="high"/>
+                                <ComboBoxItem Content="xhigh"/>
+                                <ComboBoxItem Content="max"/>
+                            </ComboBox>
+
+                            <Button Grid.Row="6" Grid.Column="1" Content="Add Provider"
+                                    Style="{StaticResource AccentButton}"
+                                    Click="AddProvider_Click"
+                                    HorizontalAlignment="Right" Width="110" Margin="0,0,0,8"/>
+                        </Grid>
+                        <CheckBox x:Name="showEffortLevelsCheckBox"
+                                  Content="Show effort levels (Low &#x2192; Max) in the menu"
+                                  Margin="0,0,0,8"/>
+                        <TextBlock Text="Providers appear as a flyout under 'Claude from here'. The endpoint must speak the Anthropic API. The API key is stored DPAPI-encrypted; leave it empty for local servers that need none."
+                                   Foreground="{StaticResource MutedBrush}"
+                                   Margin="0,0,0,8" TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <!-- Provider list -->
+                    <ListBox x:Name="ProviderListBox" MinHeight="72">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel LastChildFill="True">
+                                    <Button DockPanel.Dock="Right" Content="Remove"
+                                            DataContext="{Binding}"
+                                            Click="RemoveProvider_Click"
+                                            Width="60" Margin="4,0,0,0"/>
+                                    <TextBlock Text="{Binding Display}" FontFamily="Consolas" FontSize="12"
+                                               VerticalAlignment="Center"/>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </TabItem>
+
             <!-- Channels tab -->
             <TabItem Header="Channels">
                 <DockPanel Margin="16">

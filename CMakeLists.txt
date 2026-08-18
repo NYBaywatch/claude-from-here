@@ -15,6 +15,7 @@ target_link_libraries(ClaudeFromHere PRIVATE
     shell32
     ole32
     advapi32
+    crypt32
 )
 
 set_target_properties(ClaudeFromHere PROPERTIES
