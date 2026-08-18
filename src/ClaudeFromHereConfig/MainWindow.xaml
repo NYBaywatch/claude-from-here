@@ -249,9 +249,6 @@
                                     Click="AddProvider_Click"
                                     HorizontalAlignment="Right" Width="110" Margin="0,0,0,8"/>
                         </Grid>
-                        <CheckBox x:Name="showEffortLevelsCheckBox"
-                                  Content="Show effort levels (Low &#x2192; Max) in the menu"
-                                  Margin="0,0,0,8"/>
                         <TextBlock Text="Providers appear as a flyout under 'Claude from here'. The endpoint must speak the Anthropic API. The API key is stored DPAPI-encrypted; leave it empty for local servers that need none."
                                    Foreground="{StaticResource MutedBrush}"
                                    Margin="0,0,0,8" TextWrapping="Wrap"/>
@@ -304,6 +301,23 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
                 </DockPanel>
+            </TabItem>
+            <!-- Other tab -->
+            <TabItem Header="Other">
+                <StackPanel Margin="16">
+                    <GroupBox Header="Effort levels in the menu" Padding="8">
+                        <StackPanel>
+                            <TextBlock Text="Each enabled level adds an entry to the 'Claude from here' flyout that launches the default backend with that reasoning effort (--effort) for that session."
+                                       Foreground="{StaticResource MutedBrush}"
+                                       Margin="0,0,0,8" TextWrapping="Wrap"/>
+                            <CheckBox x:Name="effortLowCheckBox"    Content="Low"        Margin="0,2"/>
+                            <CheckBox x:Name="effortMediumCheckBox" Content="Medium"     Margin="0,2"/>
+                            <CheckBox x:Name="effortHighCheckBox"   Content="High"       Margin="0,2"/>
+                            <CheckBox x:Name="effortXhighCheckBox"  Content="Extra high" Margin="0,2"/>
+                            <CheckBox x:Name="effortMaxCheckBox"    Content="Max"        Margin="0,2"/>
+                        </StackPanel>
+                    </GroupBox>
+                </StackPanel>
             </TabItem>
         </TabControl>
     </DockPanel>

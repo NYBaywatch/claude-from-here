@@ -94,7 +94,12 @@ namespace ClaudeFromHereConfig
                 dangerSkipCheckBox.IsChecked = ((int)(key.GetValue("DangerouslySkipPermissions", 0) ?? 0)) != 0;
                 allowDangerSkipCheckBox.IsChecked = ((int)(key.GetValue("AllowDangerouslySkipPermissions", 0) ?? 0)) != 0;
                 remotePrefixTextBox.Text = key.GetValue("RemoteControlPrefix", "") as string ?? "";
-                showEffortLevelsCheckBox.IsChecked = ((int)(key.GetValue("ShowEffortLevels", 0) ?? 0)) != 0;
+                var effortLevels = (key.GetValue("EffortLevels", "") as string ?? "").Split('|');
+                effortLowCheckBox.IsChecked    = Array.IndexOf(effortLevels, "low") >= 0;
+                effortMediumCheckBox.IsChecked = Array.IndexOf(effortLevels, "medium") >= 0;
+                effortHighCheckBox.IsChecked   = Array.IndexOf(effortLevels, "high") >= 0;
+                effortXhighCheckBox.IsChecked  = Array.IndexOf(effortLevels, "xhigh") >= 0;
+                effortMaxCheckBox.IsChecked    = Array.IndexOf(effortLevels, "max") >= 0;
 
                 var channelsRaw = key.GetValue("Channels", "") as string ?? "";
                 _channels.Clear();
@@ -293,7 +298,14 @@ namespace ClaudeFromHereConfig
                 key.SetValue("AllowDangerouslySkipPermissions", allowDangerSkipCheckBox.IsChecked == true ? 1 : 0, RegistryValueKind.DWord);
                 key.SetValue("RemoteControlPrefix", remotePrefixTextBox.Text ?? "", RegistryValueKind.String);
                 key.SetValue("Channels", string.Join("|", _channels), RegistryValueKind.String);
-                key.SetValue("ShowEffortLevels", showEffortLevelsCheckBox.IsChecked == true ? 1 : 0, RegistryValueKind.DWord);
+                var enabledEfforts = new List<string>();
+                if (effortLowCheckBox.IsChecked == true)    enabledEfforts.Add("low");
+                if (effortMediumCheckBox.IsChecked == true) enabledEfforts.Add("medium");
+                if (effortHighCheckBox.IsChecked == true)   enabledEfforts.Add("high");
+                if (effortXhighCheckBox.IsChecked == true)  enabledEfforts.Add("xhigh");
+                if (effortMaxCheckBox.IsChecked == true)    enabledEfforts.Add("max");
+                key.SetValue("EffortLevels", string.Join("|", enabledEfforts), RegistryValueKind.String);
+                key.DeleteValue("ShowEffortLevels", throwOnMissingValue: false);
             }
 
             SaveProviders();

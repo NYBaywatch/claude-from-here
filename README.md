@@ -52,7 +52,7 @@ Once at least one provider exists, **Claude from here** becomes a flyout: *Claud
 
 ### Effort levels
 
-Each provider profile can also pin a reasoning effort (`--effort low/medium/high/xhigh/max`) for its launches. Or tick **Show effort levels** on the Providers tab to add the five standard effort entries (*Low effort* → *Max effort*) to the flyout without creating profiles — those launch the default backend at that effort for that session only. Effort-level launching was contributed by [Hugo Karlsson](https://github.com/HuggeK) (#4).
+Each provider profile can also pin a reasoning effort (`--effort low/medium/high/xhigh/max`) for its launches. Or enable individual effort levels on the **Other** tab to add just those entries (*Low effort* → *Max effort*) to the flyout without creating profiles — those launch the default backend at that effort for that session only. Effort-level launching was contributed by [Hugo Karlsson](https://github.com/HuggeK) (#4).
 
 ## Troubleshooting
 

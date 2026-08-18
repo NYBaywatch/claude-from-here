@@ -122,13 +122,22 @@ static int LoadProviders(ProviderProfile* profiles, int maxProfiles)
     return count;
 }
 
-static bool ShowEffortLevels()
+// Reads the EffortLevels registry value (pipe-joined tokens, e.g. "low|max")
+// into a bitmask over kEffortLevels. Zero = no effort entries in the menu.
+static DWORD GetEffortLevelMask()
 {
-    DWORD dwShow = 0;
-    DWORD cb = sizeof(dwShow);
-    RegGetValueW(HKEY_CURRENT_USER, L"Software\\ClaudeFromHere", L"ShowEffortLevels",
-        RRF_RT_REG_DWORD | RRF_ZEROONFAILURE, nullptr, &dwShow, &cb);
-    return dwShow != 0;
+    WCHAR szLevels[128] = {};
+    DWORD cb = sizeof(szLevels);
+    RegGetValueW(HKEY_CURRENT_USER, L"Software\\ClaudeFromHere", L"EffortLevels",
+        RRF_RT_REG_SZ | RRF_ZEROONFAILURE, nullptr, szLevels, &cb);
+
+    DWORD mask = 0;
+    WCHAR* ctx = nullptr;
+    for (WCHAR* tok = wcstok_s(szLevels, L"|", &ctx); tok; tok = wcstok_s(nullptr, L"|", &ctx))
+        for (int i = 0; i < (int)ARRAYSIZE(kEffortLevels); i++)
+            if (wcscmp(tok, kEffortLevels[i].token) == 0)
+                mask |= (1u << i);
+    return mask;
 }
 
 // -------------------------------------------------------------------------
@@ -779,7 +788,7 @@ public:
     {
         // Flyout only when profiles or effort levels are configured; single command otherwise.
         ProviderProfile profiles[MAX_PROVIDERS];
-        *pFlags = (LoadProviders(profiles, MAX_PROVIDERS) > 0 || ShowEffortLevels())
+        *pFlags = (LoadProviders(profiles, MAX_PROVIDERS) > 0 || GetEffortLevelMask() != 0)
             ? ECF_HASSUBCOMMANDS
             : ECF_DEFAULT;
         return S_OK;
@@ -791,8 +800,8 @@ public:
 
         ProviderProfile profiles[MAX_PROVIDERS];
         int count = LoadProviders(profiles, MAX_PROVIDERS);
-        bool showEffort = ShowEffortLevels();
-        if (count == 0 && !showEffort)
+        DWORD effortMask = GetEffortLevelMask();
+        if (count == 0 && effortMask == 0)
             return E_NOTIMPL;
 
         CEnumSubCommands* pEnum = new (std::nothrow) CEnumSubCommands();
@@ -804,20 +813,19 @@ public:
         if (pDefault)
             pEnum->Add(pDefault);
 
-        if (showEffort)
+        // Effort-only entries (PR #4, credit Hugo Karlsson): same launch as
+        // default, plus --effort <token>. Only the levels the user enabled.
+        for (int i = 0; i < (int)ARRAYSIZE(kEffortLevels); i++)
         {
-            // Standard effort-only entries (PR #4, credit Hugo Karlsson):
-            // same launch as default, plus --effort <token>.
-            for (const EffortLevel& lvl : kEffortLevels)
-            {
-                ProviderProfile p = {};
-                StringCbCopyW(p.name, sizeof(p.name), lvl.title);
-                StringCbCopyW(p.effort, sizeof(p.effort), lvl.token);
-                IExplorerCommand* pCmd =
-                    new (std::nothrow) CClaudeSubCommand(this, &p);
-                if (pCmd)
-                    pEnum->Add(pCmd);
-            }
+            if (!(effortMask & (1u << i)))
+                continue;
+            ProviderProfile p = {};
+            StringCbCopyW(p.name, sizeof(p.name), kEffortLevels[i].title);
+            StringCbCopyW(p.effort, sizeof(p.effort), kEffortLevels[i].token);
+            IExplorerCommand* pCmd =
+                new (std::nothrow) CClaudeSubCommand(this, &p);
+            if (pCmd)
+                pEnum->Add(pCmd);
         }
 
         for (int i = 0; i < count; i++)
