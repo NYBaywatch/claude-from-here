@@ -39,6 +39,7 @@ DisableDirPage=yes
 DisableProgramGroupPage=yes
 WizardStyle=modern
 WizardSmallImageFile=..\assets\wizard-small-55.bmp,..\assets\wizard-small-110.bmp
+WizardImageFile=..\assets\wizard-large-164.bmp,..\assets\wizard-large-328.bmp
 SetupIconFile=..\assets\claude.ico
 UninstallDisplayIcon={app}\claude.ico
 UninstallDisplayName=Claude From Here
