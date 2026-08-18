@@ -38,6 +38,7 @@ SolidCompression=yes
 DisableDirPage=yes
 DisableProgramGroupPage=yes
 WizardStyle=modern
+WizardSmallImageFile=..\assets\wizard-small-55.bmp,..\assets\wizard-small-110.bmp
 SetupIconFile=..\assets\claude.ico
 UninstallDisplayIcon={app}\claude.ico
 UninstallDisplayName=Claude From Here
@@ -122,6 +123,62 @@ Filename: "powershell.exe"; \
 ; ---------------------------------------------------------------------------
 
 [Code]
+// ---------------------------------------------------------------------------
+// Dark theme -- matches the Settings app (#1e1e1e background, #d4d4d4 text).
+// DWM call darkens the title bar on Windows 11; delayload keeps older
+// systems from failing at startup.
+// ---------------------------------------------------------------------------
+
+function DwmSetWindowAttribute(hWnd: THandle; dwAttribute: Integer;
+  var pvAttribute: Integer; cbAttribute: Integer): Integer;
+  external 'DwmSetWindowAttribute@dwmapi.dll stdcall delayload';
+
+const
+  CLR_BG    = $1E1E1E; // TColor is BGR; grays are palindromic
+  CLR_INPUT = $2D2D2D;
+  CLR_TEXT  = $D4D4D4;
+  CLR_MUTED = $9E9E9E;
+
+procedure InitializeWizard;
+var
+  Attr: Integer;
+begin
+  Attr := 1;
+  DwmSetWindowAttribute(WizardForm.Handle, 20, Attr, 4); // DWMWA_USE_IMMERSIVE_DARK_MODE
+  Attr := CLR_BG;
+  DwmSetWindowAttribute(WizardForm.Handle, 35, Attr, 4); // DWMWA_CAPTION_COLOR
+  Attr := CLR_TEXT;
+  DwmSetWindowAttribute(WizardForm.Handle, 36, Attr, 4); // DWMWA_TEXT_COLOR
+
+  WizardForm.Color := CLR_BG;
+  WizardForm.MainPanel.Color := CLR_BG;
+  WizardForm.InnerPage.Color := CLR_BG;
+  WizardForm.WelcomePage.Color := CLR_BG;
+  WizardForm.ReadyPage.Color := CLR_BG;
+  WizardForm.PreparingPage.Color := CLR_BG;
+  WizardForm.InstallingPage.Color := CLR_BG;
+  WizardForm.FinishedPage.Color := CLR_BG;
+  WizardForm.PageNameLabel.Font.Color := CLR_TEXT;
+  WizardForm.PageDescriptionLabel.Font.Color := CLR_MUTED;
+  WizardForm.Bevel.Visible := False;
+  WizardForm.Bevel1.Visible := False;
+
+  WizardForm.WelcomeLabel1.Font.Color := CLR_TEXT;
+  WizardForm.WelcomeLabel2.Font.Color := CLR_TEXT;
+  WizardForm.FinishedHeadingLabel.Font.Color := CLR_TEXT;
+  WizardForm.FinishedLabel.Font.Color := CLR_TEXT;
+
+  WizardForm.ReadyLabel.Font.Color := CLR_TEXT;
+  WizardForm.ReadyMemo.Color := CLR_INPUT;
+  WizardForm.ReadyMemo.Font.Color := CLR_TEXT;
+
+  WizardForm.StatusLabel.Font.Color := CLR_TEXT;
+  WizardForm.FilenameLabel.Font.Color := CLR_MUTED;
+
+  WizardForm.RunList.Color := CLR_BG;
+  WizardForm.RunList.Font.Color := CLR_TEXT;
+end;
+
 // CurStepChanged(ssInstall) fires BEFORE Inno Setup copies files.
 // On upgrade, Explorer holds a lock on ClaudeFromHere.dll from the previous
 // installation. We must unregister the MSIX and kill Explorer to release
