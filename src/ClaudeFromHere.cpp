@@ -39,7 +39,9 @@ struct ProviderProfile
     WCHAR name[128];
     WCHAR baseUrl[512];
     WCHAR model[128];
-    WCHAR token[1024]; // decrypted at load; per-user DPAPI protects it at rest
+    WCHAR subkey[64];  // registry subkey name; the launch script decrypts the
+                       // DPAPI AuthToken from it in-terminal, so the secret
+                       // never appears on a process command line
     WCHAR effort[16];  // "", or a whitelisted --effort token
 };
 
@@ -66,28 +68,6 @@ static const EffortLevel kEffortLevels[] = {
     { L"xhigh",  L"Extra high effort" },
     { L"max",    L"Max effort"        },
 };
-
-// Decrypt a DPAPI blob written by the config app (UTF-16 payload, no terminator).
-static void DecryptAuthToken(const BYTE* blob, DWORD cbBlob, PWSTR szOut, size_t cchOut)
-{
-    szOut[0] = L'\0';
-    if (!blob || cbBlob == 0)
-        return;
-
-    DATA_BLOB in = { cbBlob, const_cast<BYTE*>(blob) };
-    DATA_BLOB out = {};
-    if (!CryptUnprotectData(&in, nullptr, nullptr, nullptr, nullptr, 0, &out))
-        return;
-
-    size_t cch = out.cbData / sizeof(WCHAR);
-    if (cch >= cchOut)
-        cch = cchOut - 1;
-    memcpy(szOut, out.pbData, cch * sizeof(WCHAR));
-    szOut[cch] = L'\0';
-
-    SecureZeroMemory(out.pbData, out.cbData);
-    LocalFree(out.pbData);
-}
 
 // Returns the number of profiles loaded (0 if the Providers key is absent).
 static int LoadProviders(ProviderProfile* profiles, int maxProfiles)
@@ -129,13 +109,7 @@ static int LoadProviders(ProviderProfile* profiles, int maxProfiles)
         RegGetValueW(hSub, nullptr, L"Effort",
             RRF_RT_REG_SZ | RRF_ZEROONFAILURE, nullptr, p.effort, &cb);
 
-        BYTE tokenBlob[4096];
-        cb = sizeof(tokenBlob);
-        if (RegGetValueW(hSub, nullptr, L"AuthToken",
-                RRF_RT_REG_BINARY | RRF_ZEROONFAILURE, nullptr, tokenBlob, &cb) == ERROR_SUCCESS)
-        {
-            DecryptAuthToken(tokenBlob, cb, p.token, ARRAYSIZE(p.token));
-        }
+        StringCbCopyW(p.subkey, sizeof(p.subkey), szSubkey);
 
         RegCloseKey(hSub);
 
@@ -179,12 +153,13 @@ static HRESULT GetClaudeIconPath(LPWSTR* ppszIcon)
 // Multi-stage path detection for wt.exe and claude.exe (LNCH-02, LNCH-03).
 // Reads registry flags from HKCU\Software\ClaudeFromHere (LNCH-01).
 // Shows actionable MessageBox on failure with install instructions (LNCH-04, LNCH-05).
-// Launches: wt.exe -d "<pszPath>" -- cmd /k [set env &&] claude <flags>
-//
-// Provider env vars are injected through cmd `set` commands rather than the
-// CreateProcess environment block: wt.exe hands the tab to an already-running
-// WindowsTerminal.exe under windowingBehavior=useExisting, which would drop
-// an inherited environment.
+// Launches: wt.exe -d "<pszPath>" -- cmd /k claude <flags>
+// Provider launches instead run `powershell -EncodedCommand <script>` which
+// sets the provider env vars and decrypts the DPAPI token in-terminal — never
+// via the CreateProcess environment block (wt.exe hands the tab to an
+// already-running WindowsTerminal.exe under windowingBehavior=useExisting,
+// dropping inherited environments) and never on a command line (visible to
+// Task Manager and process-creation audit logs).
 // -------------------------------------------------------------------------
 
 // FindExecutable: 3-stage detection (SearchPathW -> HKCU App Paths -> HKLM App Paths).
@@ -210,6 +185,18 @@ static BOOL FindExecutable(PCWSTR exeName, PCWSTR appPathsSubkey, PWSTR szOut, D
         return TRUE;
 
     return FALSE;
+}
+
+// Append a PowerShell single-quoted literal ('...' with embedded ' doubled).
+static void AppendPsQuoted(PWSTR szDest, size_t cbDest, PCWSTR szValue)
+{
+    StringCbCatW(szDest, cbDest, L"'");
+    for (PCWSTR p = szValue; *p; p++)
+    {
+        WCHAR ch[3] = { *p, (*p == L'\'') ? L'\'' : L'\0', L'\0' };
+        StringCbCatW(szDest, cbDest, ch);
+    }
+    StringCbCatW(szDest, cbDest, L"'");
 }
 
 static void LaunchClaude(PCWSTR pszPath, const ProviderProfile* pProvider)
@@ -316,38 +303,6 @@ static void LaunchClaude(PCWSTR pszPath, const ProviderProfile* pProvider)
     RegGetValueW(HKEY_CURRENT_USER, L"Software\\ClaudeFromHere", L"Channels",
         RRF_RT_REG_SZ | RRF_ZEROONFAILURE, nullptr, szChannels, &cb);
 
-    // --- Build provider env prefix (set "VAR=value" && ...) ---
-    WCHAR szEnvPrefix[8192] = {};
-    if (pProvider)
-    {
-        if (pProvider->baseUrl[0])
-        {
-            StringCbCatW(szEnvPrefix, sizeof(szEnvPrefix), L"set \"ANTHROPIC_BASE_URL=");
-            StringCbCatW(szEnvPrefix, sizeof(szEnvPrefix), pProvider->baseUrl);
-            StringCbCatW(szEnvPrefix, sizeof(szEnvPrefix), L"\" && ");
-            // A globally-set Anthropic key would conflict with the routed token
-            // (OpenRouter's docs require it blank).
-            StringCbCatW(szEnvPrefix, sizeof(szEnvPrefix), L"set \"ANTHROPIC_API_KEY=\" && ");
-        }
-        if (pProvider->token[0])
-        {
-            StringCbCatW(szEnvPrefix, sizeof(szEnvPrefix), L"set \"ANTHROPIC_AUTH_TOKEN=");
-            StringCbCatW(szEnvPrefix, sizeof(szEnvPrefix), pProvider->token);
-            StringCbCatW(szEnvPrefix, sizeof(szEnvPrefix), L"\" && ");
-        }
-        if (pProvider->model[0])
-        {
-            StringCbCatW(szEnvPrefix, sizeof(szEnvPrefix), L"set \"ANTHROPIC_MODEL=");
-            StringCbCatW(szEnvPrefix, sizeof(szEnvPrefix), pProvider->model);
-            StringCbCatW(szEnvPrefix, sizeof(szEnvPrefix), L"\" && ");
-            // Background/haiku calls must not hit the third-party endpoint with an
-            // Anthropic model name it doesn't serve.
-            StringCbCatW(szEnvPrefix, sizeof(szEnvPrefix), L"set \"ANTHROPIC_SMALL_FAST_MODEL=");
-            StringCbCatW(szEnvPrefix, sizeof(szEnvPrefix), pProvider->model);
-            StringCbCatW(szEnvPrefix, sizeof(szEnvPrefix), L"\" && ");
-        }
-    }
-
     // --- Build flags string ---
     WCHAR szFlags[16384] = {};
     // The provider's model (via ANTHROPIC_MODEL) wins over the global --model flag.
@@ -439,8 +394,68 @@ static void LaunchClaude(PCWSTR pszPath, const ProviderProfile* pProvider)
     }
 
     WCHAR szCmdLine[32768] = {};
-    HRESULT hr = StringCbPrintfW(szCmdLine, sizeof(szCmdLine),
-        L"wt.exe -d \"%s\" -- cmd /k %sclaude%s", szPath, szEnvPrefix, szFlags);
+    HRESULT hr;
+    if (pProvider && pProvider->baseUrl[0])
+    {
+        // Provider launch runs through `powershell -EncodedCommand`: the script
+        // decrypts the DPAPI AuthToken from the registry inside the new terminal,
+        // so the secret never appears on any process command line (Task Manager,
+        // 4688/Sysmon audit logs). Env vars set here also survive Windows
+        // Terminal's useExisting windowing, which drops inherited environments.
+        WCHAR szScript[16384] = {};
+        StringCbCatW(szScript, sizeof(szScript), L"$env:ANTHROPIC_BASE_URL=");
+        AppendPsQuoted(szScript, sizeof(szScript), pProvider->baseUrl);
+        // A globally-set Anthropic key would conflict with the routed token
+        // (OpenRouter's docs require it blank).
+        StringCbCatW(szScript, sizeof(szScript), L";$env:ANTHROPIC_API_KEY='';");
+        if (pProvider->model[0])
+        {
+            StringCbCatW(szScript, sizeof(szScript), L"$env:ANTHROPIC_MODEL=");
+            AppendPsQuoted(szScript, sizeof(szScript), pProvider->model);
+            // Background/haiku calls must not hit the third-party endpoint with an
+            // Anthropic model name it doesn't serve.
+            StringCbCatW(szScript, sizeof(szScript), L";$env:ANTHROPIC_SMALL_FAST_MODEL=");
+            AppendPsQuoted(szScript, sizeof(szScript), pProvider->model);
+            StringCbCatW(szScript, sizeof(szScript), L";");
+        }
+        if (pProvider->subkey[0])
+        {
+            WCHAR szRegPath[256] = {};
+            StringCbPrintfW(szRegPath, sizeof(szRegPath),
+                L"HKCU:\\Software\\ClaudeFromHere\\Providers\\%s", pProvider->subkey);
+            StringCbCatW(szScript, sizeof(szScript),
+                L"$b=(Get-ItemProperty -ErrorAction SilentlyContinue ");
+            AppendPsQuoted(szScript, sizeof(szScript), szRegPath);
+            StringCbCatW(szScript, sizeof(szScript),
+                L").AuthToken;if($b){Add-Type -AssemblyName System.Security;"
+                L"$env:ANTHROPIC_AUTH_TOKEN=[System.Text.Encoding]::Unicode.GetString("
+                L"[System.Security.Cryptography.ProtectedData]::Unprotect($b,$null,'CurrentUser'))};");
+        }
+        StringCbCatW(szScript, sizeof(szScript), L"& ");
+        AppendPsQuoted(szScript, sizeof(szScript), szClaude);
+        StringCbCatW(szScript, sizeof(szScript), szFlags);
+
+        // Base64-encode the UTF-16LE script for -EncodedCommand: keeps wt.exe from
+        // splitting on ';' and sidesteps nested-quoting entirely.
+        WCHAR szEncoded[24576] = {};
+        DWORD cchEncoded = ARRAYSIZE(szEncoded);
+        size_t cchScript = wcslen(szScript);
+        if (!CryptBinaryToStringW(
+                reinterpret_cast<const BYTE*>(szScript),
+                static_cast<DWORD>(cchScript * sizeof(WCHAR)),
+                CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF,
+                szEncoded, &cchEncoded))
+            return;
+
+        hr = StringCbPrintfW(szCmdLine, sizeof(szCmdLine),
+            L"wt.exe -d \"%s\" -- powershell -NoLogo -NoExit -EncodedCommand %s",
+            szPath, szEncoded);
+    }
+    else
+    {
+        hr = StringCbPrintfW(szCmdLine, sizeof(szCmdLine),
+            L"wt.exe -d \"%s\" -- cmd /k claude%s", szPath, szFlags);
+    }
     if (FAILED(hr))
         return;
 
@@ -464,9 +479,6 @@ static void LaunchClaude(PCWSTR pszPath, const ProviderProfile* pProvider)
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
     }
-
-    SecureZeroMemory(szEnvPrefix, sizeof(szEnvPrefix));
-    SecureZeroMemory(szCmdLine, sizeof(szCmdLine));
 }
 
 // -------------------------------------------------------------------------
