@@ -54,6 +54,7 @@ Source: "..\build\ClaudeFromHereConfig.dll";        DestDir: "{app}"; Flags: ign
 Source: "..\build\ClaudeFromHereConfig.deps.json";  DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 Source: "..\build\ClaudeFromHereConfig.runtimeconfig.json"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 Source: "..\build\claude.ico";                      DestDir: "{app}"; Flags: ignoreversion
+Source: "..\assets\settings.ico";                   DestDir: "{app}"; Flags: ignoreversion
 Source: "..\build\AppxManifest.xml";                DestDir: "{app}"; Flags: ignoreversion
 Source: "..\build\Assets\*";                        DestDir: "{app}\Assets"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\build\ClaudeFromHere.msix";             DestDir: "{app}"; Flags: ignoreversion
