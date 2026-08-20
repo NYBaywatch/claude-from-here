@@ -5,6 +5,13 @@
 
 Right-click any folder in Windows 11 Explorer and open Claude Code there. One click, no terminal juggling.
 
+## ✨ New in v1.2.0
+
+- **Route Claude Code to other models** — the menu becomes a flyout with one entry per provider profile: OpenRouter (Kimi K3 and hundreds more), Kimi K2 (Moonshot), Qwen (DashScope), or any local Anthropic-compatible proxy. API keys are stored DPAPI-encrypted and never touch a command line.
+- **Effort levels in the menu** — enable *Low* → *Max* entries to launch a session at a chosen reasoning effort (contributed by [Hugo Karlsson](https://github.com/HuggeK))
+- **Launch profiles** — per-profile small/fast model, extra CLI flags, and Windows Terminal tab color/title so every backend's tab is instantly recognizable
+- **Dark-themed installer** with a crisp high-res icon
+
 ## Why
 
 Windows 11 moved the classic right-click context menu behind "Show more options" — so any tool you register the old way is two clicks away, buried. This extension puts "Claude from here" at the top level of the modern context menu, exactly where you want it.
