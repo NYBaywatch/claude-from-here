@@ -30,7 +30,8 @@ Requires Windows 11.
 - **Auto-detects paths** — finds Windows Terminal and Claude Code wherever they're installed
 - **Custom icon** — Claude icon appears next to the menu item
 - **Settings app** — configure CLI flags (--model, --verbose, --allowedTools) via Start Menu shortcut
-- **Model routing** — add provider profiles (Kimi K2, Qwen, a local Anthropic-compatible proxy) and the menu becomes a flyout so you pick per-launch which backend Claude Code talks to
+- **Model routing** — add provider profiles (OpenRouter, Kimi, Qwen, a local Anthropic-compatible proxy) and the menu becomes a flyout so you pick per-launch which backend Claude Code talks to
+- **Launch profiles** — each profile can pin a reasoning effort, a small/fast model, extra CLI flags, and a Windows Terminal tab color/title so every backend's tab is instantly recognizable
 - **Per-user install** — no admin required, no elevation prompt
 - **Clean uninstall** — removes all registry entries, MSIX registration, and files
 
